@@ -156,8 +156,11 @@
             <br><small class="text-info"><i class="bi bi-info-circle me-1"></i>Sin piezas = Venta directa (se marca como ejecutada al generar)</small>
         </div>
 
-        {{-- Boton: Ver todos los bosquejos en panel flotante --}}
-        <div class="mt-3 d-flex justify-content-end">
+        {{-- Botones: Ver todos los bosquejos en panel flotante (en ambas esquinas para facilitar acceso en tablet) --}}
+        <div class="mt-3 d-flex justify-content-between">
+            <button type="button" class="btn btn-sm btn-outline-primary" onclick="abrirPanelBosquejos()">
+                <i class="bi bi-images me-1"></i> Ver Bosquejos
+            </button>
             <button type="button" class="btn btn-sm btn-outline-primary" onclick="abrirPanelBosquejos()">
                 <i class="bi bi-images me-1"></i> Ver Bosquejos
             </button>

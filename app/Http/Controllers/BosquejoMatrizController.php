@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\GrupoBosquejo;
 use App\Models\PlantillaBosquejo;
+use App\Models\ConfiguracionSistema;
 use App\Traits\RegistraActividad;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
@@ -18,7 +19,7 @@ class BosquejoMatrizController extends Controller
     public function __construct()
     {
         $this->middleware('permission:gestionar_bosquejos_matriz')
-            ->only(['storeGrupo', 'updateGrupo', 'destroyGrupo', 'storeBosquejo', 'updateBosquejo', 'destroyBosquejo']);
+            ->only(['storeGrupo', 'updateGrupo', 'destroyGrupo', 'storeBosquejo', 'updateBosquejo', 'destroyBosquejo', 'updateNombreGenericos']);
     }
 
     /**
@@ -44,6 +45,35 @@ class BosquejoMatrizController extends Controller
             'bosquejosSinGrupo',
             'bosquejosSueltos'
         ));
+    }
+
+    /**
+     * Actualizar el nombre de la seccion de bosquejos sin grupo (AJAX).
+     */
+    public function updateNombreGenericos(Request $request)
+    {
+        $validated = $request->validate([
+            'nombre' => 'required|string|max:50',
+        ], [
+            'nombre.required' => 'El nombre es obligatorio.',
+            'nombre.max' => 'El nombre no puede exceder 50 caracteres.',
+        ]);
+
+        $anterior = ConfiguracionSistema::get('nombre_bosquejos_genericos', 'Genericos');
+        ConfiguracionSistema::set('nombre_bosquejos_genericos', $validated['nombre']);
+
+        $this->registrarActividad(
+            'bosquejo_grupo.nombre_genericos_actualizado',
+            "Se cambio el nombre de los bosquejos sin grupo de '{$anterior}' a '{$validated['nombre']}'",
+            null,
+            ['anterior' => $anterior, 'nuevo' => $validated['nombre']]
+        );
+
+        return response()->json([
+            'success' => true,
+            'nombre' => $validated['nombre'],
+            'message' => 'Nombre actualizado exitosamente.',
+        ]);
     }
 
     /**

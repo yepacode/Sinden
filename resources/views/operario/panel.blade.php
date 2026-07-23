@@ -51,7 +51,7 @@
         </a>
         <a href="{{ route('operario.complementar') }}" class="quick-action-btn">
             <i class="bi bi-plus-circle"></i>
-            <span>Complementar Ordenes</span>
+            <span>Ordenes Pendientes por Terminar</span>
             @if($stats['para_complementar'] > 0)
                 <span class="badge bg-info">{{ $stats['para_complementar'] }}</span>
             @endif

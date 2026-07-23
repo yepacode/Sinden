@@ -156,7 +156,7 @@
                 @if(isset($bosquejosSueltos) && $bosquejosSueltos->count() > 0)
                     <div class="mb-3">
                         <h6 class="fw-semibold mb-2">
-                            <i class="bi bi-image me-1 text-info"></i> Bosquejos Individuales
+                            <i class="bi bi-image me-1 text-info"></i> {{ \App\Models\ConfiguracionSistema::get('nombre_bosquejos_genericos', 'Genericos') }}
                             <span class="badge bg-light text-muted border ms-1">{{ $bosquejosSueltos->count() }}</span>
                         </h6>
                         <div class="row g-2">
@@ -360,6 +360,6 @@ var IS_ADMIN = {{ auth()->user()->hasRole('Administrador') ? 'true' : 'false' }}
 </script>
 <script src="{{ asset('js/firma-canvas.js') }}"></script>
 <script src="{{ asset('js/dibujo-canvas.js') }}"></script>
-<script src="{{ asset('js/orden-wizard.js') }}"></script>
-<script src="{{ asset('js/orden-edit-init.js') }}"></script>
+<script src="{{ asset('js/orden-wizard.js') }}?v={{ filemtime(public_path('js/orden-wizard.js')) }}"></script>
+<script src="{{ asset('js/orden-edit-init.js') }}?v={{ filemtime(public_path('js/orden-edit-init.js')) }}"></script>
 @endpush

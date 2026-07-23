@@ -33,6 +33,7 @@
                             <th>Cliente</th>
                             <th>Fecha Creacion</th>
                             <th>Fecha Entrega</th>
+                            <th>Hora Entrega</th>
                             <th>Mis Piezas</th>
                             <th>Estado</th>
                             <th>Acciones</th>
@@ -57,6 +58,7 @@ $(function() {
             { data: 'cliente_nombre', name: 'cliente_nombre' },
             { data: 'fecha_creacion_fmt', name: 'created_at', className: 'text-center' },
             { data: 'fecha_entrega_fmt', name: 'fecha_entrega', className: 'text-center' },
+            { data: 'hora_entrega_fmt', name: 'hora_entrega', searchable: false, className: 'text-center' },
             { data: 'mis_piezas', name: 'mis_piezas', orderable: false, searchable: false, className: 'text-center' },
             { data: 'estado', name: 'estado_trabajo', orderable: true, searchable: false, className: 'text-center' },
             { data: 'acciones', name: 'acciones', orderable: false, searchable: false, className: 'text-end', width: '100px' }
@@ -65,7 +67,8 @@ $(function() {
         buttons: [
             { extend: 'colvis', text: '<i class="bi bi-layout-three-columns"></i> Columnas', className: 'btn btn-sm btn-outline-secondary' }
         ],
-        order: [[0, 'desc']],
+        // Arranca ordenada por urgencia: la entrega mas proxima primero (fecha y luego hora)
+        order: [[3, 'asc'], [4, 'asc']],
         pageLength: 15,
         lengthMenu: [[10, 15, 25, 50], [10, 15, 25, 50]],
         language: {

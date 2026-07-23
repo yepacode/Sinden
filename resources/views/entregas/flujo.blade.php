@@ -2,6 +2,28 @@
 
 @section('title', 'Entregar Piezas - ' . ($orden->numero_orden ?? 'Orden'))
 
+@push('styles')
+<style>
+    /* Miniatura del bosquejo en la tabla de entregas */
+    .bosquejo-entrega-thumb {
+        width: 48px;
+        height: 48px;
+        object-fit: contain;
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        padding: 2px;
+        cursor: pointer;
+        transition: transform .12s ease, box-shadow .12s ease;
+    }
+    .bosquejo-entrega-thumb:hover {
+        transform: scale(1.08);
+        box-shadow: 0 2px 8px rgba(0,0,0,.2);
+        border-color: #4A7C59;
+    }
+</style>
+@endpush
+
 @section('content')
 <div class="container-fluid py-4" x-data="entregaFlujo()">
     {{-- Page Header --}}
@@ -61,6 +83,7 @@
                                     <th style="width: 40px;">
                                         <input type="checkbox" class="form-check-input" @click="toggleAll()" :checked="allSelected">
                                     </th>
+                                    <th class="text-center" style="width: 70px;">Bosquejo</th>
                                     <th>Identificador</th>
                                     <th class="text-center">Total</th>
                                     <th class="text-center">Pendiente</th>
@@ -75,6 +98,17 @@
                                         <td>
                                             <input type="checkbox" class="form-check-input" :value="pieza.id"
                                                 :checked="selectedIds.includes(pieza.id)" @change="togglePieza(pieza.id)">
+                                        </td>
+                                        <td class="text-center" @click.stop>
+                                            <template x-if="pieza.bosquejo_miniatura">
+                                                <img :src="pieza.bosquejo_miniatura"
+                                                    @click="verBosquejoPieza(pieza.bosquejo_imagen, pieza.nombre)"
+                                                    class="bosquejo-entrega-thumb" alt="Bosquejo"
+                                                    title="Click para ver el bosquejo">
+                                            </template>
+                                            <template x-if="!pieza.bosquejo_miniatura">
+                                                <span class="text-muted small" title="Sin bosquejo"><i class="bi bi-image"></i></span>
+                                            </template>
                                         </td>
                                         <td>
                                             <span class="fw-semibold" x-text="pieza.nombre"></span>
@@ -126,6 +160,7 @@
                         <table class="table table-hover align-middle mb-0">
                             <thead class="table-light">
                                 <tr>
+                                    <th class="text-center" style="width: 70px;">Bosquejo</th>
                                     <th>Identificador</th>
                                     <th class="text-center">Total</th>
                                     <th class="text-center">Entregadas</th>
@@ -141,6 +176,15 @@
                                         $completa = $pendientesPE === 0;
                                     @endphp
                                     <tr>
+                                        <td class="text-center">
+                                            @if($pe->bosquejo)
+                                                <img src="{{ asset($pe->bosquejo->ruta_miniatura ?: $pe->bosquejo->ruta_archivo) }}"
+                                                    onclick="verBosquejoPieza('{{ asset($pe->bosquejo->ruta_archivo) }}', '{{ addslashes($pe->nombre) }}')"
+                                                    class="bosquejo-entrega-thumb" alt="Bosquejo" title="Click para ver el bosquejo">
+                                            @else
+                                                <span class="text-muted small" title="Sin bosquejo"><i class="bi bi-image"></i></span>
+                                            @endif
+                                        </td>
                                         <td>
                                             <span class="fw-semibold">{{ $pe->nombre }}</span>
                                             <div class="small text-muted">
@@ -281,10 +325,40 @@
         </div>
     </div>
 </div>
+
+{{-- Visor de bosquejo a pantalla completa (con boton grande de cerrar) --}}
+<div class="modal fade" id="lightboxBosquejoEntrega" tabindex="-1">
+    <div class="modal-dialog modal-fullscreen">
+        <div class="modal-content bg-dark">
+            <div class="modal-header border-0">
+                <h6 class="modal-title text-white" id="lightboxBosquejoTitulo"></h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body d-flex align-items-center justify-content-center p-2" style="position:relative;overflow:auto;">
+                <img id="lightboxBosquejoImg" src="" class="img-fluid" style="max-height:calc(100vh - 90px);">
+                {{-- Boton grande de cerrar al centro-derecha (facil de tocar en tablet) --}}
+                <button type="button" class="btn-cerrar-bosquejo btn-cerrar-bosquejo--centro-derecha" data-bs-dismiss="modal">
+                    <i class="bi bi-x-lg"></i> Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
 <script>
+// Abrir el bosquejo de la pieza en grande para consultarlo durante la entrega
+function verBosquejoPieza(url, nombre) {
+    if (!url) {
+        Swal.fire({ toast: true, position: 'top-end', icon: 'info', title: 'Esta pieza no tiene bosquejo.', showConfirmButton: false, timer: 2500 });
+        return;
+    }
+    document.getElementById('lightboxBosquejoImg').src = url;
+    document.getElementById('lightboxBosquejoTitulo').textContent = nombre || 'Bosquejo';
+    new bootstrap.Modal(document.getElementById('lightboxBosquejoEntrega')).show();
+}
+
 function entregaFlujo() {
     var piezasData = @json($piezasEntregables);
     var cantidadesInit = {};

@@ -149,6 +149,30 @@ class Orden extends Model
         return $query->where('estado_trabajo', '!=', 'borrador');
     }
 
+    // === Accesor de hora de entrega ===
+
+    /**
+     * Hora de entrega formateada a 12h con a. m. / p. m. (ej. "3:05 p. m.").
+     * Devuelve null si no hay hora registrada.
+     */
+    public function getHoraEntregaFmtAttribute(): ?string
+    {
+        if (empty($this->hora_entrega)) {
+            return null;
+        }
+        try {
+            $t = \Carbon\Carbon::createFromFormat('H:i:s', $this->hora_entrega);
+        } catch (\Exception $e) {
+            try {
+                $t = \Carbon\Carbon::createFromFormat('H:i', $this->hora_entrega);
+            } catch (\Exception $e2) {
+                return $this->hora_entrega;
+            }
+        }
+        $sufijo = $t->hour < 12 ? 'a. m.' : 'p. m.';
+        return $t->format('g:i') . ' ' . $sufijo;
+    }
+
     // === Accesores de avance ===
 
     public function getPorcentajeTrabajoAttribute(): int

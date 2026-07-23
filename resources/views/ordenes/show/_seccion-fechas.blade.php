@@ -15,7 +15,7 @@
             </div>
             <div class="col-md-3">
                 <small class="text-muted d-block">Hora Entrega</small>
-                <span class="fw-medium">{{ $orden->hora_entrega ?? '-' }}</span>
+                <span class="fw-medium">{{ $orden->hora_entrega_fmt ?? '-' }}</span>
             </div>
             <div class="col-md-3">
                 <small class="text-muted d-block">Creado por</small>

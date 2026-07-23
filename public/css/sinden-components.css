@@ -1739,16 +1739,66 @@ input[type="number"] {
     text-overflow: ellipsis;
     white-space: nowrap;
 }
-.visor-bosquejo__cerrar {
-    background: transparent;
+/* Boton grande y rojo para cerrar cualquier visor de bosquejo (facil de tocar en tablet) */
+.btn-cerrar-bosquejo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #dc3545;
     border: 0;
     color: #fff;
-    font-size: 1.5rem;
+    font-size: 1.15rem;
+    font-weight: 600;
     line-height: 1;
     cursor: pointer;
-    padding: 0.25rem 0.5rem;
+    padding: 0.65rem 1.4rem;
+    min-height: 52px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
 }
-.visor-bosquejo__cerrar:hover { opacity: 0.75; }
+.btn-cerrar-bosquejo:hover { background: #bb2d3b; color: #fff; }
+/* Variante flotante centro-derecha (donde el cliente pidio el boton) */
+.btn-cerrar-bosquejo--centro-derecha {
+    position: absolute;
+    top: 50%;
+    right: 16px;
+    transform: translateY(-50%);
+    z-index: 5;
+}
+@media (max-width: 576px) {
+    .btn-cerrar-bosquejo {
+        font-size: 1.05rem;
+        padding: 0.55rem 1.1rem;
+        min-height: 48px;
+    }
+    .btn-cerrar-bosquejo--centro-derecha { right: 10px; }
+}
+
+.visor-bosquejo__cerrar {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #dc3545;
+    border: 0;
+    color: #fff;
+    font-size: 1.15rem;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0.65rem 1.4rem;
+    min-height: 52px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+    position: absolute;
+    top: 50%;
+    right: 16px;
+    transform: translateY(-50%);
+    z-index: 5;
+}
+.visor-bosquejo__cerrar:hover { background: #bb2d3b; }
+@media (max-width: 576px) {
+    .visor-bosquejo__cerrar { right: 10px; font-size: 1.05rem; min-height: 48px; }
+}
 
 .visor-bosquejo__canvas {
     flex: 1 1 auto;

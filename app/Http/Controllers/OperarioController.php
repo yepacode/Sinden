@@ -84,6 +84,11 @@ class OperarioController extends Controller
                 ->addColumn('fecha_entrega_fmt', function ($orden) {
                     return $orden->fecha_entrega ? $orden->fecha_entrega->format('d/m/Y') : '-';
                 })
+                ->addColumn('hora_entrega_fmt', function ($orden) {
+                    return $orden->hora_entrega_fmt
+                        ? '<span class="badge bg-warning text-dark"><i class="bi bi-clock me-1"></i>' . e($orden->hora_entrega_fmt) . '</span>'
+                        : '<span class="text-muted">-</span>';
+                })
                 ->addColumn('mis_piezas', function ($orden) use ($user) {
                     $total = $orden->piezas->count();
                     $mias = $orden->piezas
@@ -101,7 +106,7 @@ class OperarioController extends Controller
                         . '<a href="' . $url . '" class="action-btn view" title="Trabajar" data-tooltip="Trabajar"><i class="bi bi-tools"></i></a>'
                         . '</div>';
                 })
-                ->rawColumns(['estado', 'acciones'])
+                ->rawColumns(['estado', 'acciones', 'hora_entrega_fmt'])
                 ->make(true);
         }
 

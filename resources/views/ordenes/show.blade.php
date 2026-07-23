@@ -271,14 +271,18 @@
 
 {{-- Lightbox --}}
 <div class="modal fade" id="lightboxModal" tabindex="-1">
-    <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-dialog modal-fullscreen">
         <div class="modal-content bg-dark">
             <div class="modal-header border-0 pb-0">
                 <h6 class="modal-title text-white" id="lightboxTitle"></h6>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body text-center p-2">
-                <img id="lightboxImage" src="" class="img-fluid" style="max-height:80vh;">
+            <div class="modal-body d-flex align-items-center justify-content-center p-2" style="position:relative;overflow:auto;">
+                <img id="lightboxImage" src="" class="img-fluid" style="max-height:calc(100vh - 90px);">
+                {{-- Boton grande de cerrar al centro-derecha (facil de tocar en tablet) --}}
+                <button type="button" class="btn-cerrar-bosquejo btn-cerrar-bosquejo--centro-derecha" data-bs-dismiss="modal">
+                    <i class="bi bi-x-lg"></i> Cerrar
+                </button>
             </div>
         </div>
     </div>

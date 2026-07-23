@@ -2,10 +2,36 @@
 
 @section('title', 'Trabajar Orden ' . $orden->numero_orden)
 
+@push('styles')
+<style>
+    /* Entrega resaltada en la vista de trabajo del operario */
+    .entrega-destacada {
+        background: #FEF3C7;
+        border: 1px solid #F59E0B;
+        color: #92400E;
+    }
+    .entrega-destacada .entrega-hora {
+        background: #F59E0B;
+        color: #fff;
+        padding: .1rem .5rem;
+        border-radius: .35rem;
+        margin-left: .25rem;
+        white-space: nowrap;
+    }
+    [data-theme="dark"] .entrega-destacada,
+    [data-bs-theme="dark"] .entrega-destacada {
+        background: rgba(245, 158, 11, .18);
+        border-color: #F59E0B;
+        color: #FCD34D;
+    }
+    /* .btn-cerrar-bosquejo esta definido globalmente en sinden-components.css */
+</style>
+@endpush
+
 @section('content')
 <div class="container-fluid py-4">
     {{-- Header --}}
-    <x-sinden.page-header :title="'Orden ' . $orden->numero_orden" :description="($orden->cliente->nombre ?? 'Sin cliente') . ($orden->fecha_entrega ? ' | Entrega: ' . $orden->fecha_entrega->format('d/m/Y') : '')">
+    <x-sinden.page-header :title="'Orden ' . $orden->numero_orden" :description="($orden->cliente->nombre ?? 'Sin cliente') . ($orden->fecha_entrega ? ' | Entrega: ' . $orden->fecha_entrega->format('d/m/Y') . ($orden->hora_entrega_fmt ? ' ' . $orden->hora_entrega_fmt : '') : '')">
         <x-slot name="actions">
             <a href="{{ route('operario.ordenes-asignadas') }}" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-arrow-left me-1"></i>Volver a Ordenes
@@ -42,9 +68,27 @@
                     @endphp
                     <span class="badge bg-{{ $bc[1] }}">{{ $bc[0] }}</span>
                 </div>
-                <div class="text-muted">
-                    <i class="bi bi-puzzle me-1"></i>{{ $piezas->count() }} pieza(s) asignada(s) a ti
-                    de {{ $orden->piezas->count() }} total(es)
+                {{-- Piezas asignadas: texto grande y visible para operarios (tablet / vista cansada) --}}
+                <div class="piezas-asignadas-destacado d-flex align-items-center gap-2">
+                    <i class="bi bi-puzzle-fill text-primary fs-4"></i>
+                    <span>
+                        <strong class="fs-2 text-primary">{{ $piezas->count() }}</strong>
+                        <span class="fs-5 fw-semibold">pieza(s) asignada(s) a ti</span>
+                        <span class="fs-6 text-muted">de {{ $orden->piezas->count() }} total(es)</span>
+                    </span>
+                </div>
+                {{-- Entrega resaltada: fecha + hora bien visibles para el operario --}}
+                <div class="entrega-destacada ms-auto d-flex align-items-center gap-2 px-3 py-2 rounded">
+                    <i class="bi bi-alarm-fill fs-5"></i>
+                    <div class="lh-sm">
+                        <div class="small text-uppercase fw-semibold" style="letter-spacing:.03em; opacity:.85;">Entregar</div>
+                        <div class="fw-bold">
+                            {{ $orden->fecha_entrega ? $orden->fecha_entrega->format('d/m/Y') : 'Sin fecha' }}
+                            @if($orden->hora_entrega_fmt)
+                                <span class="entrega-hora">{{ $orden->hora_entrega_fmt }}</span>
+                            @endif
+                        </div>
+                    </div>
                 </div>
                 @if($orden->notas)
                     <div class="text-muted">
@@ -344,6 +388,10 @@
                 <div id="lightboxZoomContainer" style="overflow:auto;width:100%;height:100%;display:flex;align-items:center;justify-content:center;padding:1rem;">
                     <img id="lightboxImagen" src="" style="max-height:calc(100vh - 120px);max-width:92vw;object-fit:contain;transition:transform 0.2s;cursor:zoom-in;" onclick="toggleZoomLightbox()">
                 </div>
+                {{-- Boton grande de cerrar al centro-derecha: facil de tocar en tablet con manos ocupadas --}}
+                <button type="button" class="btn btn-danger btn-cerrar-bosquejo position-absolute top-50 end-0 translate-middle-y me-3" data-bs-dismiss="modal">
+                    <i class="bi bi-x-lg"></i> Cerrar
+                </button>
                 {{-- Contador visual --}}
                 <div class="position-absolute bottom-0 end-0 mb-3 me-3 d-flex align-items-center gap-3 bg-dark bg-opacity-75 rounded-pill px-3 py-2">
                     <button type="button" class="btn btn-outline-light rounded-circle d-flex align-items-center justify-content-center" style="width:38px;height:38px;font-size:1.2rem;" onclick="cambiarContador(-1)">
@@ -354,8 +402,8 @@
                         <i class="bi bi-plus-lg"></i>
                     </button>
                 </div>
-                {{-- Controles zoom --}}
-                <div class="position-absolute top-0 end-0 me-5 mt-2 d-flex align-items-center gap-2">
+                {{-- Controles zoom (abajo-izquierda, separados del boton Cerrar) --}}
+                <div class="position-absolute bottom-0 start-0 mb-3 ms-3 d-flex align-items-center gap-2">
                     <button type="button" class="btn btn-sm rounded-circle d-flex align-items-center justify-content-center text-white" style="width:32px;height:32px;background:rgba(0,0,0,0.75);border:1px solid #000;" onclick="zoomLightbox(-1)" title="Alejar">
                         <i class="bi bi-zoom-out"></i>
                     </button>

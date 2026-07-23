@@ -117,7 +117,7 @@
         <div class="nav-item {{ request()->routeIs('operario.complementar') ? 'active' : '' }}">
             <a href="{{ route('operario.complementar') }}" class="nav-link">
                 <i class="bi bi-plus-circle"></i>
-                <span>Pendiente por Terminar</span>
+                <span>Ordenes Pendientes por Terminar</span>
             </a>
         </div>
 

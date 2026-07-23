@@ -107,7 +107,7 @@
     <link href="{{ asset('css/gva-global.css') }}" rel="stylesheet">
     <link href="{{ asset('css/gva-dashboard.css') }}" rel="stylesheet">
     <link href="{{ asset('css/gva-components.css') }}" rel="stylesheet">
-    <link href="{{ asset('css/sinden-components.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/sinden-components.css') }}?v={{ filemtime(public_path('css/sinden-components.css')) }}" rel="stylesheet">
 
     {{-- Conexion Handler CSS --}}
     <link href="{{ asset('css/conexion-handler.css') }}" rel="stylesheet">

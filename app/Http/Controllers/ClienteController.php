@@ -3,10 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cliente;
+use App\Models\ClienteImport;
 use App\Models\ConfiguracionSistema;
 use App\Exports\ClientesExport;
+use App\Exports\ClientesTemplateExport;
+use App\Imports\ClientesImport;
 use App\Traits\RegistraActividad;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Yajra\DataTables\Facades\DataTables;
 use Maatwebsite\Excel\Facades\Excel;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -237,6 +241,119 @@ class ClienteController extends Controller
         return Pdf::loadHTML($html)
             ->setPaper('letter', 'landscape')
             ->download('clientes-' . now()->format('Y-m-d') . '.pdf');
+    }
+
+    // =========================================================
+    // Importacion masiva por Excel
+    // =========================================================
+
+    public function downloadTemplate()
+    {
+        return Excel::download(new ClientesTemplateExport(), 'plantilla-clientes.xlsx');
+    }
+
+    public function importExcel(Request $request)
+    {
+        $request->validate([
+            'archivo' => 'required|file|mimes:xlsx,xls|max:5120',
+        ], [
+            'archivo.required' => 'Debe seleccionar un archivo Excel.',
+            'archivo.mimes' => 'El archivo debe ser formato .xlsx o .xls.',
+            'archivo.max' => 'El archivo no puede superar 5 MB. Tamano maximo permitido: 5 MB.',
+            'archivo.uploaded' => 'El archivo supera el tamano maximo permitido (5 MB). Reduzca el tamano e intente de nuevo.',
+        ]);
+
+        $archivo = $request->file('archivo');
+
+        $importRecord = ClienteImport::create([
+            'usuario_id' => Auth::id(),
+            'nombre_archivo' => $archivo->getClientOriginalName(),
+            'estado' => 'procesando',
+        ]);
+
+        try {
+            $import = new ClientesImport();
+            Excel::import($import, $archivo);
+
+            $importRecord->update([
+                'total_filas' => $import->getTotalFilas(),
+                'creados' => $import->getCreados(),
+                'actualizados' => $import->getActualizados(),
+                'errores' => $import->getErrores(),
+                'estado' => $import->getErrores() > 0
+                    ? ($import->getCreados() + $import->getActualizados() > 0 ? 'completado_con_errores' : 'fallido')
+                    : 'completado',
+                'detalle_log' => $import->getDetalleLog(),
+            ]);
+
+            $this->registrarActividad(
+                'cliente.importacion',
+                "Importacion de clientes: {$import->getCreados()} creados, {$import->getActualizados()} actualizados, {$import->getErrores()} errores",
+                null,
+                [
+                    'tipo_cambio' => 'import',
+                    'modelo' => 'Cliente',
+                    'archivo' => $archivo->getClientOriginalName(),
+                    'creados' => $import->getCreados(),
+                    'actualizados' => $import->getActualizados(),
+                    'errores' => $import->getErrores(),
+                ]
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => "Importacion completada: {$import->getCreados()} creados, {$import->getActualizados()} actualizados, {$import->getErrores()} errores.",
+                'data' => [
+                    'id' => $importRecord->id,
+                    'creados' => $import->getCreados(),
+                    'actualizados' => $import->getActualizados(),
+                    'errores' => $import->getErrores(),
+                    'total' => $import->getTotalFilas(),
+                ],
+            ]);
+        } catch (\Exception $e) {
+            $importRecord->update([
+                'estado' => 'fallido',
+                'detalle_log' => [['fila' => 0, 'codigo' => '-', 'accion' => 'error', 'mensaje' => $e->getMessage(), 'datos' => []]],
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al procesar el archivo: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function importHistory()
+    {
+        $imports = ClienteImport::with('usuario:id,name')
+            ->orderBy('created_at', 'desc')
+            ->limit(20)
+            ->get()
+            ->map(function ($import) {
+                return [
+                    'id' => $import->id,
+                    'usuario' => $import->usuario->name ?? '-',
+                    'nombre_archivo' => $import->nombre_archivo,
+                    'total_filas' => $import->total_filas,
+                    'creados' => $import->creados,
+                    'actualizados' => $import->actualizados,
+                    'errores' => $import->errores,
+                    'estado' => $import->estado,
+                    'fecha' => $import->created_at->format('d/m/Y H:i'),
+                ];
+            });
+
+        return response()->json($imports);
+    }
+
+    public function importDetail(ClienteImport $import)
+    {
+        return response()->json([
+            'id' => $import->id,
+            'nombre_archivo' => $import->nombre_archivo,
+            'detalle_log' => $import->detalle_log ?? [],
+        ]);
     }
 
     protected function rules(): array

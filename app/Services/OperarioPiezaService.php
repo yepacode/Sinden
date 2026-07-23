@@ -9,6 +9,7 @@ use App\Models\Orden;
 use App\Services\NotificacionService;
 use App\Models\OrdenFoto;
 use App\Models\OrdenPieza;
+use App\Models\OrdenPiezaObservacion;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
@@ -193,6 +194,18 @@ class OperarioPiezaService
 
             // Actualizar pieza
             $pieza->update(['operario_actual_id' => $nuevoOperarioId]);
+
+            // Si la transferencia trae notas, registrarlas tambien como observacion
+            // de la pieza para que sean visibles en "Ver observaciones" del operario destino.
+            $notasLimpias = trim((string) $notas);
+            if ($notasLimpias !== '') {
+                OrdenPiezaObservacion::create([
+                    'orden_id' => $pieza->orden_id,
+                    'orden_pieza_id' => $pieza->id,
+                    'user_id' => $operarioActual->id,
+                    'observacion' => "Transferencia a {$nuevoOperario->name}: {$notasLimpias}",
+                ]);
+            }
 
             DB::commit();
 

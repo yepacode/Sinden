@@ -64,6 +64,11 @@ Route::middleware(['auth', 'verified', 'role:Administrador|Recepcion|Contabilida
         Route::get('/clientes/export-excel', [ClienteController::class, 'exportExcel'])->name('clientes.export-excel');
         Route::get('/clientes/export-pdf', [ClienteController::class, 'exportPdf'])->name('clientes.export-pdf');
         Route::patch('/clientes/{cliente}/toggle-activo', [ClienteController::class, 'toggleActivo'])->name('clientes.toggle-activo')->middleware('role:Administrador');
+        // Importacion masiva (rutas literales ANTES de la resource; solo Admin/Recepcion)
+        Route::get('/clientes/import-template', [ClienteController::class, 'downloadTemplate'])->name('clientes.import-template')->middleware('role:Administrador|Recepcion');
+        Route::post('/clientes/import-excel', [ClienteController::class, 'importExcel'])->name('clientes.import-excel')->middleware('role:Administrador|Recepcion');
+        Route::get('/clientes/import-history', [ClienteController::class, 'importHistory'])->name('clientes.import-history')->middleware('role:Administrador|Recepcion');
+        Route::get('/clientes/import-detail/{import}', [ClienteController::class, 'importDetail'])->name('clientes.import-detail')->middleware('role:Administrador|Recepcion');
         Route::resource('clientes', ClienteController::class);
 
         // Ordenes - Exportacion/PDF listado (Admin/Recepcion/Contabilidad). Rutas literales ANTES de {orden}.
@@ -193,6 +198,7 @@ Route::middleware(['auth', 'verified'])
             Route::post('/bosquejos-matriz/bosquejos', [BosquejoMatrizController::class, 'storeBosquejo'])->name('bosquejos-matriz.bosquejos.store');
             Route::put('/bosquejos-matriz/bosquejos/{bosquejo}', [BosquejoMatrizController::class, 'updateBosquejo'])->name('bosquejos-matriz.bosquejos.update');
             Route::delete('/bosquejos-matriz/bosquejos/{bosquejo}', [BosquejoMatrizController::class, 'destroyBosquejo'])->name('bosquejos-matriz.bosquejos.destroy');
+            Route::post('/bosquejos-matriz/nombre-genericos', [BosquejoMatrizController::class, 'updateNombreGenericos'])->name('bosquejos-matriz.nombre-genericos');
         });
     });
 

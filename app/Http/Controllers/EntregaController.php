@@ -178,6 +178,13 @@ class EntregaController extends Controller
             ->get()
             ->map(function ($p) {
                 $p->cantidad_pendiente = $p->cantidad - $p->cantidad_entregada;
+                // URLs del bosquejo para mostrar miniatura y abrir la imagen completa en la entrega
+                $p->bosquejo_miniatura = $p->bosquejo
+                    ? asset($p->bosquejo->ruta_miniatura ?: $p->bosquejo->ruta_archivo)
+                    : null;
+                $p->bosquejo_imagen = $p->bosquejo
+                    ? asset($p->bosquejo->ruta_archivo)
+                    : null;
                 return $p;
             });
 
@@ -188,6 +195,7 @@ class EntregaController extends Controller
 
         $piezasEntregadas = $orden->piezas()
             ->where('cantidad_entregada', '>', 0)
+            ->with('bosquejo')
             ->orderBy('orden_visual')
             ->get();
 

@@ -452,15 +452,43 @@ function agregarFilaItem(opts) {
     }
 }
 
-function eliminarFilaItem(idx) {
-    $('#itemRow_' + idx).remove();
-    renumerarFilasItems();
-    recalcularTotales();
-    if ($('#tbodyItems tr').length === 0) {
-        $('#itemsVacio').show();
-        $('#panelTotales').hide();
+// Confirmacion generica antes de eliminar filas del wizard
+function confirmarEliminacionFila(titulo, html) {
+    if (!window.Swal) {
+        // Fallback de emergencia si el CDN de SweetAlert2 no cargo
+        var textoPlano = html.replace(/<[^>]*>/g, '');
+        return Promise.resolve(window.confirm(titulo + '\n' + textoPlano));
     }
-    triggerAutoSave('item-del');
+    return Swal.fire({
+        title: titulo,
+        html: html,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#EF4444',
+        cancelButtonColor: '#6B7280',
+        confirmButtonText: 'Si, eliminar',
+        cancelButtonText: 'Cancelar'
+    }).then(function(result) {
+        return result.isConfirmed;
+    });
+}
+
+function eliminarFilaItem(idx) {
+    var desc = ($('#itemRow_' + idx + ' .item-descripcion').val() || '').trim();
+    var detalle = desc
+        ? 'Se eliminara el item <b>' + escapeHtml(desc) + '</b>.'
+        : 'Se eliminara este item.';
+    confirmarEliminacionFila('¿Eliminar item?', detalle).then(function(confirmado) {
+        if (!confirmado) return;
+        $('#itemRow_' + idx).remove();
+        renumerarFilasItems();
+        recalcularTotales();
+        if ($('#tbodyItems tr').length === 0) {
+            $('#itemsVacio').show();
+            $('#panelTotales').hide();
+        }
+        triggerAutoSave('item-del');
+    });
 }
 
 function contarFilasItems() {
@@ -1170,15 +1198,27 @@ function agregarFilaPieza(opts) {
 }
 
 function eliminarFilaPieza(idx) {
-    $('#piezaRow_' + idx).remove();
-    $('#piezaNotasRow_' + idx).remove();
-    renumerarFilasPiezas();
-    if ($('#tbodyPiezas tr.pieza-row').length === 0) {
-        $('#tablaPiezas').hide();
-        $('#piezasVacio').show();
-        desmarcarStep(2);
+    var $row = $('#piezaRow_' + idx);
+    var nombre = ($row.find('.pieza-nombre').val() || '').trim();
+    var tieneBosquejo = ($row.attr('data-bosquejo-index') || '') !== '';
+    var detalle = nombre
+        ? 'Se eliminara <b>' + escapeHtml(nombre) + '</b>.'
+        : 'Se eliminara esta pieza.';
+    if (tieneBosquejo) {
+        detalle += '<br><span class="text-danger">Tambien se perdera el bosquejo/dibujo asociado.</span>';
     }
-    triggerAutoSave('pieza-del');
+    confirmarEliminacionFila('¿Eliminar pieza?', detalle).then(function(confirmado) {
+        if (!confirmado) return;
+        $('#piezaRow_' + idx).remove();
+        $('#piezaNotasRow_' + idx).remove();
+        renumerarFilasPiezas();
+        if ($('#tbodyPiezas tr.pieza-row').length === 0) {
+            $('#tablaPiezas').hide();
+            $('#piezasVacio').show();
+            desmarcarStep(2);
+        }
+        triggerAutoSave('pieza-del');
+    });
 }
 
 function renumerarFilasPiezas() {
@@ -1326,14 +1366,21 @@ function agregarFilaPago(opts) {
 }
 
 function eliminarFilaPago(idx) {
-    $('#pagoRow_' + idx).remove();
-    recalcularSaldo();
-    if ($('#pagosContainer .pago-row').length === 0) {
-        $('#pagosVacio').show();
-        $('#panelSaldo').hide();
-        desmarcarStep(5);
-    }
-    triggerAutoSave('pago-del');
+    var monto = ($('#pagoRow_' + idx + ' .pago-monto').val() || '').trim();
+    var detalle = (monto && monto !== '0')
+        ? 'Se eliminara el abono de <b>$' + escapeHtml(monto) + '</b>.'
+        : 'Se eliminara este abono.';
+    confirmarEliminacionFila('¿Eliminar abono?', detalle).then(function(confirmado) {
+        if (!confirmado) return;
+        $('#pagoRow_' + idx).remove();
+        recalcularSaldo();
+        if ($('#pagosContainer .pago-row').length === 0) {
+            $('#pagosVacio').show();
+            $('#panelSaldo').hide();
+            desmarcarStep(5);
+        }
+        triggerAutoSave('pago-del');
+    });
 }
 
 function recalcularSaldo() {

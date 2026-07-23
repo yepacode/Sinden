@@ -20,7 +20,7 @@
     <div class="summary-cards">
         <x-sinden.stat-card icon="bi bi-folder" :value="$totalGrupos" title="Total Grupos" color="primary" />
         <x-sinden.stat-card icon="bi bi-image" :value="$totalBosquejos" title="Total Bosquejos" color="info" />
-        <x-sinden.stat-card icon="bi bi-images" :value="$bosquejosSinGrupo" title="Sin Grupo" color="warning" />
+        <x-sinden.stat-card icon="bi bi-images" :value="$bosquejosSinGrupo" :title="\App\Models\ConfiguracionSistema::get('nombre_bosquejos_genericos', 'Genericos')" color="warning" />
     </div>
 
     {{-- Accordion de Grupos --}}
@@ -113,13 +113,20 @@
     </div>
     @endif
 
-    {{-- Seccion de Bosquejos Individuales --}}
+    {{-- Seccion de Bosquejos sin grupo (nombre configurable, por defecto "Genericos") --}}
+    @php $nombreGenericos = \App\Models\ConfiguracionSistema::get('nombre_bosquejos_genericos', 'Genericos'); @endphp
     @if($bosquejosSueltos->count() > 0)
     <div class="card border-0 shadow-sm mb-3 rounded-3 overflow-hidden mt-4" id="seccion-individuales">
         <div class="card-header bg-white d-flex align-items-center justify-content-between">
             <div>
                 <i class="bi bi-image me-2 text-warning"></i>
-                <strong>Bosquejos Individuales</strong>
+                <strong id="tituloGenericos">{{ $nombreGenericos }}</strong>
+                @can('gestionar_bosquejos_matriz')
+                <button type="button" class="btn btn-sm btn-link p-0 ms-1 align-baseline text-secondary"
+                    title="Renombrar seccion" onclick="editarNombreGenericos()">
+                    <i class="bi bi-pencil"></i>
+                </button>
+                @endcan
                 <span class="badge bg-light text-muted border ms-2">{{ $bosquejosSueltos->count() }}</span>
             </div>
             @can('gestionar_bosquejos_matriz')
@@ -275,7 +282,7 @@
         <span id="visorBosquejoTitulo" class="visor-bosquejo__titulo"></span>
         <button type="button" class="visor-bosquejo__cerrar" aria-label="Cerrar"
                 onclick="cerrarVisorBosquejo()">
-            <i class="bi bi-x-lg"></i>
+            <i class="bi bi-x-lg"></i> Cerrar
         </button>
     </div>
     <div class="visor-bosquejo__canvas" id="visorBosquejoCanvas">
@@ -408,6 +415,47 @@ function guardarGrupo() {
 }
 
 // ===== RENOMBRAR (grupo o bosquejo) =====
+// ===== Renombrar la seccion de bosquejos sin grupo =====
+function editarNombreGenericos() {
+    var actual = ($('#tituloGenericos').text() || '').trim();
+    Swal.fire({
+        title: 'Nombre de la seccion',
+        input: 'text',
+        inputValue: actual,
+        inputAttributes: { maxlength: 50 },
+        inputPlaceholder: 'Ej: Genericos',
+        showCancelButton: true,
+        confirmButtonText: 'Guardar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#4A7C59',
+        inputValidator: function(value) {
+            if (!value || !value.trim()) {
+                return 'El nombre es obligatorio.';
+            }
+        }
+    }).then(function(result) {
+        if (!result.isConfirmed) return;
+        var nombre = result.value.trim();
+        $.ajax({
+            url: '{{ route("recepcion.bosquejos-matriz.nombre-genericos") }}',
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            contentType: 'application/json',
+            data: JSON.stringify({ nombre: nombre }),
+            success: function(data) {
+                if (data.success) {
+                    $('#tituloGenericos').text(data.nombre);
+                    Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: data.message, showConfirmButton: false, timer: 3000 });
+                }
+            },
+            error: function(xhr) {
+                var msg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'No se pudo actualizar el nombre.';
+                Swal.fire('Error', msg, 'error');
+            }
+        });
+    });
+}
+
 function abrirModalRenombrar(tipo, id, nombreActual) {
     $('#renombrar_tipo').val(tipo);
     $('#renombrar_id').val(id);
