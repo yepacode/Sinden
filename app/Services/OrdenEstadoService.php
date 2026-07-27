@@ -123,11 +123,13 @@ class OrdenEstadoService
      */
     public function recalcularTotales(Orden $orden): Orden
     {
-        $orden->subtotal = $orden->items()->sum('subtotal');
-        $orden->monto_iva = $orden->items()->sum('monto_iva');
-        $descuentoTotal = $orden->items()->sum('descuento_monto');
+        // Peso colombiano sin centavos: totales en pesos enteros para que el
+        // valor mostrado sea el real y el abonable (sin decimales ocultos).
+        $orden->subtotal = round($orden->items()->sum('subtotal'), 0);
+        $orden->monto_iva = round($orden->items()->sum('monto_iva'), 0);
+        $descuentoTotal = round($orden->items()->sum('descuento_monto'), 0);
         $orden->total = $orden->subtotal + $orden->monto_iva - $descuentoTotal;
-        $orden->total_pagado = $orden->pagos()->where('aprobado', true)->sum('monto');
+        $orden->total_pagado = round($orden->pagos()->where('aprobado', true)->sum('monto'), 0);
         $orden->saldo = $orden->total - $orden->total_pagado;
 
         return $orden;

@@ -582,9 +582,10 @@ function recalcularTotales() {
         var precio = parseCOP($(this).find('.item-precio').val());
         var iva = $(this).find('.item-iva-check').is(':checked') ? WIZARD_CONFIG.ivaDefecto : 0;
         var descPct = Math.max(0, Math.min(100, parseFloat($(this).find('.item-descuento').val()) || 0));
-        var base = cantidad * precio;
-        var descMonto = base * descPct / 100;
-        var ivaVal = base * (iva / 100);
+        // Peso colombiano sin centavos: redondear cada monto a pesos enteros
+        var base = Math.round(cantidad * precio);
+        var descMonto = Math.round(base * descPct / 100);
+        var ivaVal = Math.round(base * (iva / 100));
         totalSubtotalBruto += base;
         totalDescuento += descMonto;
         totalIva += ivaVal;
@@ -1396,9 +1397,10 @@ function recalcularSaldo() {
         var precio = parseCOP($(this).find('.item-precio').val());
         var iva = $(this).find('.item-iva-check').is(':checked') ? WIZARD_CONFIG.ivaDefecto : 0;
         var descPct = Math.max(0, Math.min(100, parseFloat($(this).find('.item-descuento').val()) || 0));
-        var base = cantidad * precio;
-        var ivaVal = base * (iva / 100);
-        var descMonto = base * descPct / 100;
+        // Peso colombiano sin centavos: redondear a pesos enteros
+        var base = Math.round(cantidad * precio);
+        var ivaVal = Math.round(base * (iva / 100));
+        var descMonto = Math.round(base * descPct / 100);
         totalGeneral += base + ivaVal - descMonto;
     });
 
@@ -1709,9 +1711,11 @@ function validarSobrepagoWizard() {
         var precio = parseCOP($(this).find('.item-precio').val());
         var iva = $(this).find('.item-iva-check').is(':checked') ? WIZARD_CONFIG.ivaDefecto : 0;
         var descPct = Math.max(0, Math.min(100, parseFloat($(this).find('.item-descuento').val()) || 0));
-        var base = cantidad * precio;
-        var sub = base - (base * descPct / 100);
-        totalGeneral += sub + (sub * iva / 100);
+        // Peso colombiano sin centavos: redondear igual que el display y el backend
+        var base = Math.round(cantidad * precio);
+        var ivaVal = Math.round(base * (iva / 100));
+        var descMonto = Math.round(base * descPct / 100);
+        totalGeneral += base + ivaVal - descMonto;
     });
 
     if (totalAbonado > totalGeneral + 0.005) {

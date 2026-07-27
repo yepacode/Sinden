@@ -152,61 +152,7 @@ class OperarioPiezaService
 
         DB::beginTransaction();
         try {
-            // Cerrar asignacion activa actual
-            AsignacionPieza::where('orden_pieza_id', $pieza->id)
-                ->where('asignado_a_id', $operarioActual->id)
-                ->where('activa', true)
-                ->update(['activa' => false]);
-
-            // Cerrar historial abierto
-            HistorialAvance::where('orden_pieza_id', $pieza->id)
-                ->where('operario_id', $operarioActual->id)
-                ->whereNull('completado_en')
-                ->update([
-                    'porcentaje_hasta' => $pieza->porcentaje_avance,
-                    'contribucion' => DB::raw("({$pieza->porcentaje_avance} - porcentaje_desde)"),
-                    'completado_en' => now(),
-                ]);
-
-            // Crear nueva asignacion
-            AsignacionPieza::create([
-                'orden_pieza_id' => $pieza->id,
-                'orden_id' => $pieza->orden_id,
-                'asignado_desde_id' => $operarioActual->id,
-                'asignado_a_id' => $nuevoOperarioId,
-                'asignado_por_id' => $operarioActual->id,
-                'tipo_asignacion' => 'transferencia',
-                'porcentaje_al_asignar' => $pieza->porcentaje_avance,
-                'notas' => $notas,
-                'activa' => true,
-            ]);
-
-            // Crear historial abierto para nuevo operario
-            HistorialAvance::create([
-                'orden_pieza_id' => $pieza->id,
-                'operario_id' => $nuevoOperarioId,
-                'porcentaje_desde' => $pieza->porcentaje_avance,
-                'porcentaje_hasta' => $pieza->porcentaje_avance,
-                'contribucion' => 0,
-                'asignado_en' => now(),
-                'completado_en' => null,
-            ]);
-
-            // Actualizar pieza
-            $pieza->update(['operario_actual_id' => $nuevoOperarioId]);
-
-            // Si la transferencia trae notas, registrarlas tambien como observacion
-            // de la pieza para que sean visibles en "Ver observaciones" del operario destino.
-            $notasLimpias = trim((string) $notas);
-            if ($notasLimpias !== '') {
-                OrdenPiezaObservacion::create([
-                    'orden_id' => $pieza->orden_id,
-                    'orden_pieza_id' => $pieza->id,
-                    'user_id' => $operarioActual->id,
-                    'observacion' => "Transferencia a {$nuevoOperario->name}: {$notasLimpias}",
-                ]);
-            }
-
+            $this->aplicarTransferenciaPieza($pieza, $nuevoOperario, $operarioActual, $notas);
             DB::commit();
 
             return ['success' => true, 'nuevo_operario' => $nuevoOperario->name];
@@ -217,9 +163,113 @@ class OperarioPiezaService
     }
 
     /**
-     * Deja la pieza en cola general (sin operario).
+     * Transfiere de golpe TODAS las piezas del operario en una orden a un mismo
+     * operario destino, en una sola transaccion (o todo o nada).
      */
-    public function dejarEnCola(OrdenPieza $pieza, User $operario): array
+    public function transferirPiezasMasivo(Orden $orden, int $nuevoOperarioId, User $operarioActual, ?string $notas = null): array
+    {
+        $nuevoOperario = User::find($nuevoOperarioId);
+        if (!$nuevoOperario || !$nuevoOperario->isOperario()) {
+            return ['success' => false, 'error' => 'Operario destino no valido.'];
+        }
+        if ((int) $nuevoOperarioId === $operarioActual->id) {
+            return ['success' => false, 'error' => 'No puedes transferir las piezas a ti mismo.'];
+        }
+
+        // Solo las piezas asignadas al operario actual que aun no esten al 100%.
+        $piezas = $orden->piezas()
+            ->where('operario_actual_id', $operarioActual->id)
+            ->where('porcentaje_avance', '<', 100)
+            ->get();
+
+        if ($piezas->isEmpty()) {
+            return ['success' => false, 'error' => 'No tienes piezas para transferir en esta orden.'];
+        }
+
+        DB::beginTransaction();
+        try {
+            foreach ($piezas as $pieza) {
+                $this->aplicarTransferenciaPieza($pieza, $nuevoOperario, $operarioActual, $notas);
+            }
+            DB::commit();
+
+            return [
+                'success' => true,
+                'nuevo_operario' => $nuevoOperario->name,
+                'cantidad' => $piezas->count(),
+            ];
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Aplica la transferencia de UNA pieza (sin manejar la transaccion; el
+     * llamador debe envolverla). Usado por la transferencia individual y masiva.
+     */
+    protected function aplicarTransferenciaPieza(OrdenPieza $pieza, User $nuevoOperario, User $operarioActual, ?string $notas): void
+    {
+        // Cerrar asignacion activa actual
+        AsignacionPieza::where('orden_pieza_id', $pieza->id)
+            ->where('asignado_a_id', $operarioActual->id)
+            ->where('activa', true)
+            ->update(['activa' => false]);
+
+        // Cerrar historial abierto
+        HistorialAvance::where('orden_pieza_id', $pieza->id)
+            ->where('operario_id', $operarioActual->id)
+            ->whereNull('completado_en')
+            ->update([
+                'porcentaje_hasta' => $pieza->porcentaje_avance,
+                'contribucion' => DB::raw("({$pieza->porcentaje_avance} - porcentaje_desde)"),
+                'completado_en' => now(),
+            ]);
+
+        // Crear nueva asignacion
+        AsignacionPieza::create([
+            'orden_pieza_id' => $pieza->id,
+            'orden_id' => $pieza->orden_id,
+            'asignado_desde_id' => $operarioActual->id,
+            'asignado_a_id' => $nuevoOperario->id,
+            'asignado_por_id' => $operarioActual->id,
+            'tipo_asignacion' => 'transferencia',
+            'porcentaje_al_asignar' => $pieza->porcentaje_avance,
+            'notas' => $notas,
+            'activa' => true,
+        ]);
+
+        // Crear historial abierto para nuevo operario
+        HistorialAvance::create([
+            'orden_pieza_id' => $pieza->id,
+            'operario_id' => $nuevoOperario->id,
+            'porcentaje_desde' => $pieza->porcentaje_avance,
+            'porcentaje_hasta' => $pieza->porcentaje_avance,
+            'contribucion' => 0,
+            'asignado_en' => now(),
+            'completado_en' => null,
+        ]);
+
+        // Actualizar pieza
+        $pieza->update(['operario_actual_id' => $nuevoOperario->id]);
+
+        // Nota de transferencia como observacion visible para el operario destino.
+        $notasLimpias = trim((string) $notas);
+        if ($notasLimpias !== '') {
+            OrdenPiezaObservacion::create([
+                'orden_id' => $pieza->orden_id,
+                'orden_pieza_id' => $pieza->id,
+                'user_id' => $operarioActual->id,
+                'observacion' => "Transferencia a {$nuevoOperario->name}: {$notasLimpias}",
+            ]);
+        }
+    }
+
+    /**
+     * Deja la pieza en cola general (sin operario).
+     * $notas: comentario de "que falta por hacer" para guiar al proximo operario.
+     */
+    public function dejarEnCola(OrdenPieza $pieza, User $operario, ?string $notas = null): array
     {
         if ((int) $pieza->operario_actual_id !== $operario->id) {
             return ['success' => false, 'error' => 'No tienes esta pieza asignada.'];
@@ -245,6 +295,18 @@ class OperarioPiezaService
 
             // Liberar pieza
             $pieza->update(['operario_actual_id' => null]);
+
+            // Guardar el comentario de "que falta" como observacion de la pieza,
+            // para que el proximo operario que la tome sepa que hace falta.
+            $notasLimpias = trim((string) $notas);
+            if ($notasLimpias !== '') {
+                OrdenPiezaObservacion::create([
+                    'orden_id' => $pieza->orden_id,
+                    'orden_pieza_id' => $pieza->id,
+                    'user_id' => $operario->id,
+                    'observacion' => "Falta por hacer: {$notasLimpias}",
+                ]);
+            }
 
             DB::commit();
 

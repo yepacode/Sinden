@@ -1043,6 +1043,8 @@ class OrdenController extends Controller
      */
     public function exportPdf(Request $request)
     {
+        ini_set('memory_limit', '512M'); // PDF puede ser pesado con muchas ordenes
+
         $query = $this->aplicarFiltrosListado($request);
         // Si no se filtro explicitamente por estado_trabajo, excluir anuladas (comportamiento previo)
         if (!$request->filled('estado_trabajo')) {

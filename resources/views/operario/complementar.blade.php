@@ -30,7 +30,9 @@
                     <thead>
                         <tr>
                             <th>Orden #</th>
+                            <th class="text-center" style="width:70px;">Bosquejo</th>
                             <th>Pieza</th>
+                            <th>¿Que falta?</th>
                             <th>Progreso</th>
                             <th>Ultimo Operario</th>
                             <th>Cliente</th>
@@ -43,10 +45,39 @@
         </div>
     </div>
 </div>
+
+{{-- Visor de bosquejo a pantalla completa (boton grande de cerrar) --}}
+<div class="modal fade" id="lightboxBosquejoComplementar" tabindex="-1">
+    <div class="modal-dialog modal-fullscreen">
+        <div class="modal-content bg-dark">
+            <div class="modal-header border-0">
+                <h6 class="modal-title text-white" id="lightboxBosquejoTitulo"></h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body d-flex align-items-center justify-content-center p-2" style="position:relative;overflow:auto;">
+                <img id="lightboxBosquejoImg" src="" class="img-fluid" style="max-height:calc(100vh - 90px);">
+                <button type="button" class="btn-cerrar-bosquejo btn-cerrar-bosquejo--centro-derecha" data-bs-dismiss="modal">
+                    <i class="bi bi-x-lg"></i> Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
 <script>
+// Abrir el bosquejo de la pieza en grande (global para el onclick de la miniatura)
+function verBosquejoPieza(url, nombre) {
+    if (!url) {
+        Swal.fire({ toast: true, position: 'top-end', icon: 'info', title: 'Esta pieza no tiene bosquejo.', showConfirmButton: false, timer: 2500 });
+        return;
+    }
+    document.getElementById('lightboxBosquejoImg').src = url;
+    document.getElementById('lightboxBosquejoTitulo').textContent = nombre || 'Bosquejo';
+    new bootstrap.Modal(document.getElementById('lightboxBosquejoComplementar')).show();
+}
+
 $(function() {
     var CSRF_TOKEN = '{{ csrf_token() }}';
 
@@ -56,7 +87,9 @@ $(function() {
         ajax: '{{ route("operario.complementar") }}',
         columns: [
             { data: 'orden_numero', name: 'orden_numero', className: 'fw-semibold', width: '90px' },
+            { data: 'bosquejo', name: 'bosquejo', orderable: false, searchable: false, className: 'text-center' },
             { data: 'pieza_info', name: 'nombre' },
+            { data: 'ultimo_comentario', name: 'ultimo_comentario', orderable: false, searchable: false },
             { data: 'progreso', name: 'porcentaje_avance', width: '140px', orderable: true, searchable: false },
             { data: 'ultimo_operario', name: 'ultimo_operario', orderable: false, searchable: false },
             { data: 'cliente_nombre', name: 'cliente_nombre', orderable: false, searchable: false },

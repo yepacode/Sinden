@@ -334,6 +334,14 @@
     {{-- Boton principal ACTUALIZAR ORDEN --}}
     @if($lockResult['success'] ?? false)
     <div class="text-center mt-4 mb-5">
+        @if($piezas->count() > 1)
+        <div class="mb-3">
+            <button type="button" class="btn btn-outline-warning" id="btnTransferirMasivo">
+                <i class="bi bi-arrow-left-right me-1"></i>Transferir TODAS mis piezas a un operario
+            </button>
+            <div class="small text-muted mt-1">Envia de una vez tus {{ $piezas->count() }} piezas al mismo operario.</div>
+        </div>
+        @endif
         <button type="button" class="btn btn-lg btn-primary px-5" id="btnActualizarOrden">
             <i class="bi bi-check-lg me-2"></i>ACTUALIZAR ORDEN
         </button>
@@ -369,6 +377,43 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                 <button type="button" class="btn btn-warning" id="btnConfirmarTransferencia">
+                    <i class="bi bi-arrow-left-right me-1"></i>Confirmar Transferencia
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Modal Transferir Masivo (todas las piezas del operario a un mismo operario) --}}
+<div class="modal fade" id="modalTransferirMasivo" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-arrow-left-right me-2"></i>Transferir todas las piezas</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning py-2">
+                    <i class="bi bi-exclamation-triangle me-1"></i>
+                    Se transferiran <strong>tus {{ $piezas->count() }} pieza(s)</strong> de esta orden al operario que elijas.
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Operario destino</label>
+                    <select class="form-select" id="transferirMasivoOperarioSelect">
+                        <option value="">Selecciona un operario...</option>
+                        @foreach($operarios as $op)
+                            <option value="{{ $op->id }}">{{ $op->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Notas (opcional)</label>
+                    <textarea class="form-control" id="transferirMasivoNotas" rows="2" placeholder="Instrucciones o notas para el otro operario (se aplican a todas las piezas)..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-warning" id="btnConfirmarTransferenciaMasiva">
                     <i class="bi bi-arrow-left-right me-1"></i>Confirmar Transferencia
                 </button>
             </div>

@@ -313,12 +313,32 @@ class OperarioController extends Controller
                                 ->orWhere('estado_entrega', '!=', 'entregada');
                         });
                 })
-                ->with(['orden.cliente'])
+                ->with(['orden.cliente', 'bosquejo', 'observaciones' => function ($q) {
+                    $q->latest();
+                }])
                 ->select('orden_piezas.*');
 
             return DataTables::eloquent($query)
                 ->addColumn('orden_numero', function ($pieza) {
                     return $pieza->orden->numero_orden ?? '-';
+                })
+                ->addColumn('bosquejo', function ($pieza) {
+                    if ($pieza->bosquejo) {
+                        $mini = asset($pieza->bosquejo->ruta_miniatura ?: $pieza->bosquejo->ruta_archivo);
+                        $full = asset($pieza->bosquejo->ruta_archivo);
+                        return '<img src="' . $mini . '" class="bosquejo-entrega-thumb" alt="Bosquejo" '
+                            . 'title="Click para ver el bosquejo" '
+                            . 'onclick="verBosquejoPieza(\'' . $full . '\', \'' . e($pieza->nombre) . '\')">';
+                    }
+                    return '<span class="text-muted small" title="Sin bosquejo"><i class="bi bi-image"></i></span>';
+                })
+                ->addColumn('ultimo_comentario', function ($pieza) {
+                    $obs = $pieza->observaciones->first();
+                    if ($obs) {
+                        return '<span class="d-inline-block text-wrap" style="max-width:220px;"><i class="bi bi-chat-left-text me-1 text-info"></i>'
+                            . e($obs->observacion) . '</span>';
+                    }
+                    return '<span class="text-muted small">—</span>';
                 })
                 ->addColumn('pieza_info', function ($pieza) {
                     $info = '<span class="fw-semibold">' . e($pieza->nombre) . '</span>';
@@ -360,7 +380,7 @@ class OperarioController extends Controller
                         . '<i class="bi bi-hand-index me-1"></i>Tomar'
                         . '</button>';
                 })
-                ->rawColumns(['pieza_info', 'progreso', 'acciones'])
+                ->rawColumns(['bosquejo', 'ultimo_comentario', 'pieza_info', 'progreso', 'acciones'])
                 ->make(true);
         }
 
@@ -473,17 +493,61 @@ class OperarioController extends Controller
     }
 
     /**
+     * POST /operario/ordenes/{orden}/transferir-masivo
+     * Transfiere de golpe todas las piezas del operario en la orden a un mismo operario.
+     */
+    public function transferirMasivo(Request $request, Orden $orden)
+    {
+        $request->validate([
+            'nuevo_operario_id' => 'required|integer|exists:users,id',
+            'notas' => 'nullable|string|max:500',
+        ]);
+
+        $user = auth()->user();
+        $resultado = $this->piezaService->transferirPiezasMasivo(
+            $orden,
+            (int) $request->input('nuevo_operario_id'),
+            $user,
+            $request->input('notas')
+        );
+
+        if ($resultado['success']) {
+            $this->registrarActividad('pieza.transferida',
+                "Transferencia masiva de {$resultado['cantidad']} pieza(s) a {$resultado['nuevo_operario']}",
+                $orden->id,
+                [
+                    'tipo_cambio' => 'update',
+                    'modelo' => 'OrdenPieza',
+                    'modelo_id' => null,
+                    'cantidad_piezas' => $resultado['cantidad'],
+                    'nuevo_operario_id' => (int) $request->input('nuevo_operario_id'),
+                    'notas_transferencia' => $request->input('notas'),
+                ]
+            );
+        }
+
+        return response()->json($resultado);
+    }
+
+    /**
      * POST /operario/piezas/{pieza}/dejar-cola
      */
-    public function dejarEnCola(OrdenPieza $pieza)
+    public function dejarEnCola(Request $request, OrdenPieza $pieza)
     {
+        $validated = $request->validate([
+            'notas' => 'required|string|max:500',
+        ], [
+            'notas.required' => 'Debe indicar que falta por hacer en la pieza.',
+            'notas.max' => 'El comentario no puede superar los 500 caracteres.',
+        ]);
+
         $user = auth()->user();
         $operarioAnteriorId = $pieza->operario_actual_id;
-        $resultado = $this->piezaService->dejarEnCola($pieza, $user);
+        $resultado = $this->piezaService->dejarEnCola($pieza, $user, $validated['notas']);
 
         if ($resultado['success']) {
             $this->registrarActividad('pieza.liberada_a_pool',
-                "Pieza '{$pieza->nombre}' dejada en cola general",
+                "Pieza '{$pieza->nombre}' dejada en cola general. Falta: {$validated['notas']}",
                 $pieza->orden_id,
                 [
                     'tipo_cambio' => 'update',

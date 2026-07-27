@@ -233,6 +233,7 @@ Route::middleware(['auth', 'verified', 'role:Administrador|Operario'])
         // AJAX: Trabajo con piezas
         Route::post('/ordenes/{orden}/actualizar-avances', [OperarioController::class, 'actualizarAvances'])->name('ordenes.actualizar-avances');
         Route::post('/piezas/{pieza}/transferir', [OperarioController::class, 'transferirPieza'])->name('piezas.transferir');
+        Route::post('/ordenes/{orden}/transferir-masivo', [OperarioController::class, 'transferirMasivo'])->name('ordenes.transferir-masivo');
         Route::post('/piezas/{pieza}/dejar-cola', [OperarioController::class, 'dejarEnCola'])->name('piezas.dejar-cola');
         Route::post('/piezas/{pieza}/tomar', [OperarioController::class, 'tomarPieza'])->name('piezas.tomar');
         Route::post('/piezas/{pieza}/foto', [OperarioController::class, 'subirFoto'])->name('piezas.foto');

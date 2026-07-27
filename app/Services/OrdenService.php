@@ -329,9 +329,11 @@ class OrdenService
             $porcentajeIva = floatval($item['porcentaje_iva'] ?? 19);
             $descuentoPorcentaje = max(0, min(100, floatval($item['descuento_porcentaje'] ?? 0)));
 
-            $base = $cantidad * $precioUnitario;
-            $descuentoMonto = round($base * $descuentoPorcentaje / 100, 2);
-            $montoIva = round($base * ($porcentajeIva / 100), 2);
+            // Peso colombiano sin centavos: redondear a pesos enteros para que
+            // el total mostrado sea exactamente el total real (y el abonable).
+            $base = round($cantidad * $precioUnitario, 0);
+            $descuentoMonto = round($base * $descuentoPorcentaje / 100, 0);
+            $montoIva = round($base * ($porcentajeIva / 100), 0);
 
             OrdenItem::create([
                 'orden_id' => $orden->id,

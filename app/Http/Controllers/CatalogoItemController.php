@@ -212,6 +212,8 @@ class CatalogoItemController extends Controller
 
     public function exportPdf()
     {
+        ini_set('memory_limit', '512M');
+
         $items = CatalogoItem::where('activo', true)->orderBy('codigo')->get();
         $fecha = now()->timezone('America/Bogota')->format('d/m/Y H:i');
 

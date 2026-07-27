@@ -352,6 +352,86 @@
                 ejecutarTransferencia();
             }
         });
+
+        // ---- Transferencia MASIVA (todas las piezas del operario a un mismo operario) ----
+        $(document).on('click', '#btnTransferirMasivo', function() {
+            $('#transferirMasivoOperarioSelect').val('');
+            $('#transferirMasivoNotas').val('');
+            new bootstrap.Modal(document.getElementById('modalTransferirMasivo')).show();
+        });
+
+        $('#btnConfirmarTransferenciaMasiva').on('click', function() {
+            var operarioId = $('#transferirMasivoOperarioSelect').val();
+            var notas = $('#transferirMasivoNotas').val();
+
+            if (!operarioId) {
+                Swal.fire({ icon: 'warning', title: 'Selecciona un operario', text: 'Debes elegir a quien transferir todas las piezas.' });
+                return;
+            }
+
+            var operarioNombre = $('#transferirMasivoOperarioSelect option:selected').text();
+            var btn = $(this);
+
+            Swal.fire({
+                title: 'Transferir TODAS las piezas?',
+                html: 'Se transferiran <b>todas tus piezas</b> de esta orden a <b>' + operarioNombre + '</b>.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Si, transferir todas',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#f0ad4e'
+            }).then(function(result) {
+                if (!result.isConfirmed) return;
+                btn.prop('disabled', true);
+
+                function ejecutarMasivo() {
+                    $.ajax({
+                        url: '/operario/ordenes/' + ORDEN_ID + '/transferir-masivo',
+                        method: 'POST',
+                        data: { _token: CSRF_TOKEN, nuevo_operario_id: operarioId, notas: notas },
+                        success: function(data) {
+                            btn.prop('disabled', false);
+                            if (data.success) {
+                                huboAccionPieza = true;
+                                var inst = bootstrap.Modal.getInstance(document.getElementById('modalTransferirMasivo'));
+                                if (inst) inst.hide();
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Piezas transferidas',
+                                    text: data.cantidad + ' pieza(s) transferida(s) a ' + data.nuevo_operario + '.',
+                                    timer: 2500,
+                                    showConfirmButton: false
+                                }).then(function() {
+                                    window.location.href = '/operario/ordenes-asignadas';
+                                });
+                            } else {
+                                Swal.fire({ icon: 'error', title: 'Error', text: data.error || 'No se pudo transferir.' });
+                            }
+                        },
+                        error: function() {
+                            btn.prop('disabled', false);
+                            Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo completar la transferencia masiva.' });
+                        }
+                    });
+                }
+
+                // Guardar primero cualquier avance pendiente (de cualquier pieza) antes de transferir
+                var cambios = [];
+                for (var pid in piezasCambios) {
+                    if (piezasCambios.hasOwnProperty(pid) && piezasCambios[pid] !== undefined) {
+                        cambios.push({ pieza_id: parseInt(pid), porcentaje: piezasCambios[pid] });
+                    }
+                }
+                if (cambios.length > 0) {
+                    enviarActualizacionSilenciosa(cambios, function() {
+                        cambios.forEach(function(c) { delete piezasCambios[c.pieza_id]; });
+                        ejecutarMasivo();
+                    });
+                } else {
+                    ejecutarMasivo();
+                }
+            });
+        });
     }
 
     // ==========================================
@@ -364,18 +444,29 @@
 
             Swal.fire({
                 title: 'Dejar en pendiente por terminar?',
-                html: 'La pieza <b>' + piezaNombre + '</b> quedara disponible para que otro operario la tome.',
+                html: 'La pieza <b>' + piezaNombre + '</b> quedara disponible para que otro operario la tome.<br>'
+                    + '<span class="text-muted small">Indica que falta por hacer para guiar al proximo operario.</span>',
                 icon: 'question',
+                input: 'textarea',
+                inputLabel: 'Que falta por hacer? (obligatorio)',
+                inputPlaceholder: 'Ej: falta rolar, falta cortar, falta soldar...',
+                inputAttributes: { maxlength: 500 },
                 showCancelButton: true,
                 confirmButtonText: 'Si, dejar en pendiente',
-                cancelButtonText: 'Cancelar'
+                cancelButtonText: 'Cancelar',
+                inputValidator: function(value) {
+                    if (!value || !value.trim()) {
+                        return 'Debe indicar que falta por hacer en la pieza.';
+                    }
+                }
             }).then(function(result) {
                 if (result.isConfirmed) {
+                    var notasFalta = (result.value || '').trim();
                     function ejecutarDejarCola() {
                         $.ajax({
                             url: '/operario/piezas/' + piezaId + '/dejar-cola',
                             method: 'POST',
-                            data: { _token: CSRF_TOKEN },
+                            data: { _token: CSRF_TOKEN, notas: notasFalta },
                             success: function(data) {
                                 if (data.success) {
                                     huboAccionPieza = true;

@@ -15,6 +15,11 @@ class OrdenPdfController extends Controller
      */
     public function show(Request $request, Orden $orden)
     {
+        // El PDF embebe imagenes (logo, bosquejos, firma) en base64 y DomPDF
+        // consume bastante memoria; en hosting con memory_limit bajo (ej. 32M)
+        // esto causa error 500. Aseguramos memoria suficiente en tiempo de ejecucion.
+        ini_set('memory_limit', '512M');
+
         $cols = $this->validateCols($request);
         $data = $this->prepareOrdenData($orden, $cols);
 
@@ -38,6 +43,8 @@ class OrdenPdfController extends Controller
      */
     public function multiple(Request $request)
     {
+        ini_set('memory_limit', '512M');
+
         $ids = array_filter(explode(',', $request->input('ids', '')));
         if (empty($ids)) {
             return back()->with('error', 'Seleccione al menos una orden.');
@@ -64,6 +71,8 @@ class OrdenPdfController extends Controller
      */
     public function zip(Request $request)
     {
+        ini_set('memory_limit', '512M');
+
         $ids = array_filter(explode(',', $request->input('ids', '')));
         if (empty($ids)) {
             return back()->with('error', 'Seleccione al menos una orden.');
