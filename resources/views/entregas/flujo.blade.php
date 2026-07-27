@@ -2,27 +2,7 @@
 
 @section('title', 'Entregar Piezas - ' . ($orden->numero_orden ?? 'Orden'))
 
-@push('styles')
-<style>
-    /* Miniatura del bosquejo en la tabla de entregas */
-    .bosquejo-entrega-thumb {
-        width: 48px;
-        height: 48px;
-        object-fit: contain;
-        background: #f8f9fa;
-        border: 1px solid #dee2e6;
-        border-radius: 6px;
-        padding: 2px;
-        cursor: pointer;
-        transition: transform .12s ease, box-shadow .12s ease;
-    }
-    .bosquejo-entrega-thumb:hover {
-        transform: scale(1.08);
-        box-shadow: 0 2px 8px rgba(0,0,0,.2);
-        border-color: #4A7C59;
-    }
-</style>
-@endpush
+{{-- .bosquejo-entrega-thumb esta definido globalmente en sinden-components.css --}}
 
 @section('content')
 <div class="container-fluid py-4" x-data="entregaFlujo()">
