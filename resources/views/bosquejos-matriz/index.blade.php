@@ -576,6 +576,7 @@ function subirBosquejo() {
 
     var total = files.length;
     var exitos = 0;
+    var reemplazos = 0;
     var errores = [];
     var url = '{{ route("recepcion.bosquejos-matriz.bosquejos.store") }}';
     var csrf = $('meta[name="csrf-token"]').attr('content');
@@ -594,10 +595,15 @@ function subirBosquejo() {
                 } catch (e) {}
             }
             if (errores.length === 0) {
+                var nuevos = exitos - reemplazos;
+                var titulo = exitos + ' bosquejo(s) subido(s)';
+                if (reemplazos > 0) {
+                    titulo = nuevos + ' nuevo(s), ' + reemplazos + ' reemplazado(s)';
+                }
                 Swal.fire({ toast: true, position: 'top-end', icon: 'success',
-                    title: exitos + ' bosquejo(s) subido(s)', showConfirmButton: false, timer: 2500 });
+                    title: titulo, showConfirmButton: false, timer: 3000 });
                 $('#modalSubirBosquejo').modal('hide');
-                setTimeout(function() { location.reload(); }, 600);
+                setTimeout(function() { location.reload(); }, 800);
             } else {
                 $btn.prop('disabled', false).html('<i class="bi bi-upload me-1"></i>Subir');
                 Swal.fire({
@@ -635,6 +641,7 @@ function subirBosquejo() {
             success: function(data) {
                 if (data && data.success) {
                     exitos++;
+                    if (data.reemplazo) reemplazos++;
                 } else {
                     errores.push(file.name + ': ' + ((data && data.message) || 'error desconocido'));
                 }

@@ -193,13 +193,36 @@ class BosquejoMatrizController extends Controller
             File::makeDirectory($uploadPath, 0755, true);
         }
 
-        // Crear registro para obtener ID
-        $bosquejo = PlantillaBosquejo::create([
-            'grupo_bosquejo_id' => $grupoId,
-            'nombre' => $validated['nombre'],
-            'ruta_archivo' => '',
-            'ruta_miniatura' => null,
-        ]);
+        // Si ya existe un bosquejo con el MISMO NOMBRE en el MISMO grupo,
+        // se REEMPLAZA (no se crea un duplicado). Asi, subir de nuevo la misma
+        // carpeta actualiza los archivos en vez de duplicarlos.
+        $existente = PlantillaBosquejo::where('nombre', $validated['nombre'])
+            ->when(
+                $grupoId,
+                fn($q) => $q->where('grupo_bosquejo_id', $grupoId),
+                fn($q) => $q->whereNull('grupo_bosquejo_id')
+            )
+            ->first();
+
+        $esReemplazo = (bool) $existente;
+
+        if ($esReemplazo) {
+            // Borrar los archivos fisicos anteriores para no dejar basura
+            foreach ([$existente->ruta_archivo, $existente->ruta_miniatura] as $rutaAntigua) {
+                if ($rutaAntigua && File::exists(public_path($rutaAntigua))) {
+                    File::delete(public_path($rutaAntigua));
+                }
+            }
+            $bosquejo = $existente;
+        } else {
+            // Crear registro para obtener ID
+            $bosquejo = PlantillaBosquejo::create([
+                'grupo_bosquejo_id' => $grupoId,
+                'nombre' => $validated['nombre'],
+                'ruta_archivo' => '',
+                'ruta_miniatura' => null,
+            ]);
+        }
 
         $extension = $file->getClientOriginalExtension();
         $timestamp = time();
@@ -227,21 +250,35 @@ class BosquejoMatrizController extends Controller
             'ruta_miniatura' => $rutaMiniatura,
         ]);
 
-        $desc = $grupoId
-            ? "Se subio el bosquejo: '{$bosquejo->nombre}' al grupo ID {$grupoId}"
-            : "Se subio el bosquejo individual: '{$bosquejo->nombre}'";
-
-        $this->registrarCreacion(
-            'bosquejo.creado',
-            $desc,
-            $bosquejo,
-            null,
-            ['grupo_bosquejo_id' => $grupoId]
-        );
+        if ($esReemplazo) {
+            $desc = "Se reemplazo el bosquejo '{$bosquejo->nombre}'"
+                . ($grupoId ? " en el grupo ID {$grupoId}" : ' (individual)')
+                . ' (ya existia uno con el mismo nombre)';
+            $this->registrarActividad(
+                'bosquejo.actualizado',
+                $desc,
+                null,
+                ['bosquejo_id' => $bosquejo->id, 'grupo_bosquejo_id' => $grupoId, 'reemplazo' => true]
+            );
+        } else {
+            $desc = $grupoId
+                ? "Se subio el bosquejo: '{$bosquejo->nombre}' al grupo ID {$grupoId}"
+                : "Se subio el bosquejo individual: '{$bosquejo->nombre}'";
+            $this->registrarCreacion(
+                'bosquejo.creado',
+                $desc,
+                $bosquejo,
+                null,
+                ['grupo_bosquejo_id' => $grupoId]
+            );
+        }
 
         return response()->json([
             'success' => true,
-            'message' => 'Bosquejo subido exitosamente.',
+            'reemplazo' => $esReemplazo,
+            'message' => $esReemplazo
+                ? "El bosquejo '{$bosquejo->nombre}' ya existia y fue reemplazado."
+                : 'Bosquejo subido exitosamente.',
             'bosquejo' => $bosquejo->fresh(),
         ]);
     }
