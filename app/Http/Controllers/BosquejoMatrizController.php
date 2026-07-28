@@ -174,6 +174,7 @@ class BosquejoMatrizController extends Controller
             'nombre' => 'required|string|max:255',
             'grupo_bosquejo_id' => 'nullable|exists:grupos_bosquejos,id',
             'archivo' => 'required|image|mimes:jpeg,jpg,png,webp|max:10240',
+            'modo' => 'nullable|in:nuevo,reemplazar,renombrar',
         ], [
             'nombre.required' => 'El nombre del bosquejo es obligatorio.',
             'grupo_bosquejo_id.exists' => 'El grupo seleccionado no existe.',
@@ -185,6 +186,7 @@ class BosquejoMatrizController extends Controller
         ]);
 
         $grupoId = $validated['grupo_bosquejo_id'] ?? null;
+        $modo = $validated['modo'] ?? 'nuevo';
         $uploadSubDir = $grupoId ?: 'individuales';
         $file = $request->file('archivo');
 
@@ -193,9 +195,7 @@ class BosquejoMatrizController extends Controller
             File::makeDirectory($uploadPath, 0755, true);
         }
 
-        // Si ya existe un bosquejo con el MISMO NOMBRE en el MISMO grupo,
-        // se REEMPLAZA (no se crea un duplicado). Asi, subir de nuevo la misma
-        // carpeta actualiza los archivos en vez de duplicarlos.
+        // Ver si ya existe un bosquejo con el mismo nombre en el mismo grupo.
         $existente = PlantillaBosquejo::where('nombre', $validated['nombre'])
             ->when(
                 $grupoId,
@@ -204,10 +204,13 @@ class BosquejoMatrizController extends Controller
             )
             ->first();
 
-        $esReemplazo = (bool) $existente;
+        $esReemplazo = false;
+        $esRenombrado = false;
+        $nombreFinal = $validated['nombre'];
 
-        if ($esReemplazo) {
-            // Borrar los archivos fisicos anteriores para no dejar basura
+        if ($existente && $modo === 'reemplazar') {
+            // Reemplazar: borrar archivos anteriores y reutilizar el registro.
+            $esReemplazo = true;
             foreach ([$existente->ruta_archivo, $existente->ruta_miniatura] as $rutaAntigua) {
                 if ($rutaAntigua && File::exists(public_path($rutaAntigua))) {
                     File::delete(public_path($rutaAntigua));
@@ -215,10 +218,15 @@ class BosquejoMatrizController extends Controller
             }
             $bosquejo = $existente;
         } else {
-            // Crear registro para obtener ID
+            // Crear nuevo. Si el nombre colisiona (y no es reemplazo), se genera
+            // un nombre unico ("X (2)", "X (3)"...) para no duplicar ni pisar.
+            if ($existente) {
+                $nombreFinal = $this->generarNombreUnico($validated['nombre'], $grupoId);
+                $esRenombrado = true;
+            }
             $bosquejo = PlantillaBosquejo::create([
                 'grupo_bosquejo_id' => $grupoId,
-                'nombre' => $validated['nombre'],
+                'nombre' => $nombreFinal,
                 'ruta_archivo' => '',
                 'ruta_miniatura' => null,
             ]);
@@ -273,14 +281,69 @@ class BosquejoMatrizController extends Controller
             );
         }
 
+        $mensaje = 'Bosquejo subido exitosamente.';
+        if ($esReemplazo) {
+            $mensaje = "El bosquejo '{$bosquejo->nombre}' fue reemplazado.";
+        } elseif ($esRenombrado) {
+            $mensaje = "Ya existia ese nombre; se guardo como '{$bosquejo->nombre}'.";
+        }
+
         return response()->json([
             'success' => true,
             'reemplazo' => $esReemplazo,
-            'message' => $esReemplazo
-                ? "El bosquejo '{$bosquejo->nombre}' ya existia y fue reemplazado."
-                : 'Bosquejo subido exitosamente.',
+            'renombrado' => $esRenombrado,
+            'nombre_final' => $bosquejo->nombre,
+            'message' => $mensaje,
             'bosquejo' => $bosquejo->fresh(),
         ]);
+    }
+
+    /**
+     * Genera un nombre unico dentro del grupo agregando " (2)", " (3)"...
+     */
+    protected function generarNombreUnico(string $nombreBase, $grupoId): string
+    {
+        $existe = function ($nombre) use ($grupoId) {
+            return PlantillaBosquejo::where('nombre', $nombre)
+                ->when(
+                    $grupoId,
+                    fn($q) => $q->where('grupo_bosquejo_id', $grupoId),
+                    fn($q) => $q->whereNull('grupo_bosquejo_id')
+                )
+                ->exists();
+        };
+
+        if (!$existe($nombreBase)) {
+            return $nombreBase;
+        }
+
+        $i = 2;
+        while ($existe("{$nombreBase} ({$i})")) {
+            $i++;
+        }
+        return "{$nombreBase} ({$i})";
+    }
+
+    /**
+     * AJAX: dada una lista de nombres y un grupo, devuelve cuales ya existen.
+     * Sirve para avisar de duplicados ANTES de subir.
+     */
+    public function checkNombresBosquejo(Request $request)
+    {
+        $grupoId = $request->input('grupo_bosquejo_id') ?: null;
+        $nombres = array_filter((array) $request->input('nombres', []));
+
+        $existentes = PlantillaBosquejo::whereIn('nombre', $nombres)
+            ->when(
+                $grupoId,
+                fn($q) => $q->where('grupo_bosquejo_id', $grupoId),
+                fn($q) => $q->whereNull('grupo_bosquejo_id')
+            )
+            ->pluck('nombre')
+            ->unique()
+            ->values();
+
+        return response()->json(['existentes' => $existentes]);
     }
 
     /**

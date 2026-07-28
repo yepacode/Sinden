@@ -195,6 +195,7 @@ Route::middleware(['auth', 'verified'])
             Route::post('/bosquejos-matriz/grupos', [BosquejoMatrizController::class, 'storeGrupo'])->name('bosquejos-matriz.grupos.store');
             Route::put('/bosquejos-matriz/grupos/{grupo}', [BosquejoMatrizController::class, 'updateGrupo'])->name('bosquejos-matriz.grupos.update');
             Route::delete('/bosquejos-matriz/grupos/{grupo}', [BosquejoMatrizController::class, 'destroyGrupo'])->name('bosquejos-matriz.grupos.destroy');
+            Route::post('/bosquejos-matriz/check-nombres', [BosquejoMatrizController::class, 'checkNombresBosquejo'])->name('bosquejos-matriz.check-nombres');
             Route::post('/bosquejos-matriz/bosquejos', [BosquejoMatrizController::class, 'storeBosquejo'])->name('bosquejos-matriz.bosquejos.store');
             Route::put('/bosquejos-matriz/bosquejos/{bosquejo}', [BosquejoMatrizController::class, 'updateBosquejo'])->name('bosquejos-matriz.bosquejos.update');
             Route::delete('/bosquejos-matriz/bosquejos/{bosquejo}', [BosquejoMatrizController::class, 'destroyBosquejo'])->name('bosquejos-matriz.bosquejos.destroy');

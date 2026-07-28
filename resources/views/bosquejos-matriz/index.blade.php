@@ -571,96 +571,173 @@ function subirBosquejo() {
         return;
     }
 
-    var $btn = $('#btnSubirBosquejo');
-    $btn.prop('disabled', true);
-
-    var total = files.length;
-    var exitos = 0;
-    var reemplazos = 0;
-    var errores = [];
     var url = '{{ route("recepcion.bosquejos-matriz.bosquejos.store") }}';
+    var urlCheck = '{{ route("recepcion.bosquejos-matriz.check-nombres") }}';
     var csrf = $('meta[name="csrf-token"]').attr('content');
 
-    function actualizarBoton(i) {
-        $btn.html('<span class="spinner-border spinner-border-sm me-1"></span>Subiendo ' + i + ' de ' + total + '...');
+    // Nombre por archivo (manual solo si es 1)
+    function nombreDe(file) {
+        if (files.length === 1 && nombreManual) return nombreManual;
+        return file.name.replace(/\.[^/.]+$/, '');
     }
 
-    function subirUno(index) {
-        if (index >= total) {
-            // Terminado
-            // Recordar a que grupo se subio para reabrir su acordeon tras el reload
-            if (exitos > 0) {
-                try {
-                    sessionStorage.setItem('bosquejosMatrizOpenGrupo', grupoId ? String(grupoId) : 'individuales');
-                } catch (e) {}
-            }
-            if (errores.length === 0) {
-                var nuevos = exitos - reemplazos;
-                var titulo = exitos + ' bosquejo(s) subido(s)';
-                if (reemplazos > 0) {
-                    titulo = nuevos + ' nuevo(s), ' + reemplazos + ' reemplazado(s)';
-                }
-                Swal.fire({ toast: true, position: 'top-end', icon: 'success',
-                    title: titulo, showConfirmButton: false, timer: 3000 });
-                $('#modalSubirBosquejo').modal('hide');
-                setTimeout(function() { location.reload(); }, 800);
+    // Tareas de subida: {file, nombre, modo}. modo: 'nuevo' | 'reemplazar' | 'renombrar'
+    var items = Array.prototype.map.call(files, function(f) {
+        return { file: f, nombre: nombreDe(f), modo: 'nuevo' };
+    });
+
+    // 1) Detectar cuales nombres ya existen en el grupo
+    $.ajax({
+        url: urlCheck,
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': csrf },
+        data: { grupo_bosquejo_id: grupoId || '', nombres: items.map(function(i) { return i.nombre; }) },
+        success: function(resp) {
+            var existentes = (resp && resp.existentes) || [];
+            var colisiones = items.filter(function(i) { return existentes.indexOf(i.nombre) !== -1; });
+
+            if (colisiones.length === 0) {
+                procesar(items);
+            } else if (items.length === 1) {
+                dialogoUno(items[0]);
             } else {
-                $btn.prop('disabled', false).html('<i class="bi bi-upload me-1"></i>Subir');
-                Swal.fire({
-                    icon: exitos > 0 ? 'warning' : 'error',
-                    title: 'Subida con errores',
-                    html: 'Exitosos: ' + exitos + '<br>Errores: ' + errores.length + '<br><br><small>' + errores.join('<br>') + '</small>'
-                }).then(function() {
-                    if (exitos > 0) location.reload();
-                });
+                dialogoVarios(colisiones, existentes);
             }
-            return;
+        },
+        error: function() {
+            // Si el chequeo falla, subir normal (el backend evita duplicados/renombra solo)
+            procesar(items);
         }
+    });
 
-        actualizarBoton(index + 1);
-        var file = files[index];
-        var nombre;
-        if (total === 1) {
-            nombre = nombreManual || file.name.replace(/\.[^/.]+$/, '');
-        } else {
-            nombre = file.name.replace(/\.[^/.]+$/, '');
-        }
-
-        var formData = new FormData();
-        formData.append('nombre', nombre);
-        formData.append('archivo', file);
-        if (grupoId) formData.append('grupo_bosquejo_id', grupoId);
-
-        $.ajax({
-            url: url,
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': csrf },
-            data: formData,
-            processData: false,
-            contentType: false,
-            success: function(data) {
-                if (data && data.success) {
-                    exitos++;
-                    if (data.reemplazo) reemplazos++;
-                } else {
-                    errores.push(file.name + ': ' + ((data && data.message) || 'error desconocido'));
-                }
-                subirUno(index + 1);
-            },
-            error: function(xhr) {
-                var msg = 'error';
-                if (xhr.responseJSON && xhr.responseJSON.errors) {
-                    msg = Object.values(xhr.responseJSON.errors).flat().join(', ');
-                } else if (xhr.responseJSON && xhr.responseJSON.message) {
-                    msg = xhr.responseJSON.message;
-                }
-                errores.push(file.name + ': ' + msg);
-                subirUno(index + 1);
-            }
+    // --- Dialogo para 1 archivo duplicado ---
+    function dialogoUno(item) {
+        var sugerido = item.nombre + ' (2)';
+        Swal.fire({
+            title: 'Ese nombre ya existe',
+            html: 'Ya existe un bosquejo llamado <b>' + item.nombre + '</b> en este grupo.',
+            input: 'text',
+            inputLabel: 'Guardar con este nombre (puedes cambiarlo):',
+            inputValue: sugerido,
+            inputAttributes: { maxlength: 255 },
+            showCancelButton: true,
+            showDenyButton: true,
+            confirmButtonText: 'Guardar con este nombre',
+            denyButtonText: 'Reemplazar existente',
+            cancelButtonText: 'Omitir',
+            confirmButtonColor: '#4A7C59',
+            denyButtonColor: '#f0ad4e',
+            inputValidator: function(v) { if (!v || !v.trim()) return 'Escribe un nombre.'; }
+        }).then(function(r) {
+            if (r.isConfirmed) { item.nombre = r.value.trim(); item.modo = 'nuevo'; procesar([item]); }
+            else if (r.isDenied) { item.modo = 'reemplazar'; procesar([item]); }
+            // Omitir/cancelar: no sube nada
         });
     }
 
-    subirUno(0);
+    // --- Dialogo para varios duplicados (carpeta) ---
+    function dialogoVarios(colisiones, existentes) {
+        Swal.fire({
+            title: colisiones.length + ' ya existen',
+            html: '<b>' + colisiones.length + '</b> de los bosquejos ya existen en este grupo.<br>Que deseas hacer con esos?',
+            icon: 'warning',
+            showCancelButton: true,
+            showDenyButton: true,
+            confirmButtonText: 'Renombrar todos',
+            denyButtonText: 'Reemplazar todos',
+            cancelButtonText: 'Omitir esos',
+            confirmButtonColor: '#4A7C59',
+            denyButtonColor: '#f0ad4e'
+        }).then(function(r) {
+            var tareas;
+            if (r.isConfirmed) {
+                // Renombrar los duplicados (el backend genera nombre unico)
+                colisiones.forEach(function(c) { c.modo = 'renombrar'; });
+                tareas = items;
+            } else if (r.isDenied) {
+                colisiones.forEach(function(c) { c.modo = 'reemplazar'; });
+                tareas = items;
+            } else {
+                // Omitir esos: subir solo los que no existen
+                tareas = items.filter(function(i) { return existentes.indexOf(i.nombre) === -1; });
+                if (tareas.length === 0) {
+                    Swal.fire({ toast: true, position: 'top-end', icon: 'info', title: 'No hay bosquejos nuevos para subir', showConfirmButton: false, timer: 2500 });
+                    return;
+                }
+            }
+            procesar(tareas);
+        });
+    }
+
+    // --- Sube la lista de tareas secuencialmente ---
+    function procesar(tareas) {
+        var $btn = $('#btnSubirBosquejo');
+        $btn.prop('disabled', true);
+        var total = tareas.length, exitos = 0, reemplazos = 0, renombrados = 0, errores = [];
+
+        function subirUno(index) {
+            if (index >= total) {
+                if (exitos > 0) {
+                    try { sessionStorage.setItem('bosquejosMatrizOpenGrupo', grupoId ? String(grupoId) : 'individuales'); } catch (e) {}
+                }
+                if (errores.length === 0) {
+                    var partes = [];
+                    var nuevos = exitos - reemplazos - renombrados;
+                    if (nuevos > 0) partes.push(nuevos + ' nuevo(s)');
+                    if (renombrados > 0) partes.push(renombrados + ' renombrado(s)');
+                    if (reemplazos > 0) partes.push(reemplazos + ' reemplazado(s)');
+                    Swal.fire({ toast: true, position: 'top-end', icon: 'success',
+                        title: partes.join(', ') || (exitos + ' bosquejo(s) subido(s)'),
+                        showConfirmButton: false, timer: 3000 });
+                    $('#modalSubirBosquejo').modal('hide');
+                    setTimeout(function() { location.reload(); }, 900);
+                } else {
+                    $btn.prop('disabled', false).html('<i class="bi bi-upload me-1"></i>Subir');
+                    Swal.fire({
+                        icon: exitos > 0 ? 'warning' : 'error',
+                        title: 'Subida con errores',
+                        html: 'Exitosos: ' + exitos + '<br>Errores: ' + errores.length + '<br><br><small>' + errores.join('<br>') + '</small>'
+                    }).then(function() { if (exitos > 0) location.reload(); });
+                }
+                return;
+            }
+
+            $btn.html('<span class="spinner-border spinner-border-sm me-1"></span>Subiendo ' + (index + 1) + ' de ' + total + '...');
+            var t = tareas[index];
+            var formData = new FormData();
+            formData.append('nombre', t.nombre);
+            formData.append('archivo', t.file);
+            formData.append('modo', t.modo);
+            if (grupoId) formData.append('grupo_bosquejo_id', grupoId);
+
+            $.ajax({
+                url: url, method: 'POST', headers: { 'X-CSRF-TOKEN': csrf },
+                data: formData, processData: false, contentType: false,
+                success: function(data) {
+                    if (data && data.success) {
+                        exitos++;
+                        if (data.reemplazo) reemplazos++;
+                        else if (data.renombrado) renombrados++;
+                    } else {
+                        errores.push(t.file.name + ': ' + ((data && data.message) || 'error desconocido'));
+                    }
+                    subirUno(index + 1);
+                },
+                error: function(xhr) {
+                    var msg = 'error';
+                    if (xhr.responseJSON && xhr.responseJSON.errors) {
+                        msg = Object.values(xhr.responseJSON.errors).flat().join(', ');
+                    } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                        msg = xhr.responseJSON.message;
+                    }
+                    errores.push(t.file.name + ': ' + msg);
+                    subirUno(index + 1);
+                }
+            });
+        }
+
+        subirUno(0);
+    }
 }
 
 // ===== ELIMINAR BOSQUEJO =====
