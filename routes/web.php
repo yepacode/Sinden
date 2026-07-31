@@ -342,6 +342,7 @@ Route::middleware(['auth', 'verified', 'role:Administrador'])->prefix('admin')->
     Route::put('/tabla-precios/servicios/{tipo_servicio}', [TablaPreciosController::class, 'updateServicio'])->name('tabla-precios.servicios.update');
     Route::delete('/tabla-precios/servicios/{tipo_servicio}', [TablaPreciosController::class, 'destroyServicio'])->name('tabla-precios.servicios.destroy');
     Route::get('/tabla-precios/export-excel', [TablaPreciosController::class, 'exportExcel'])->name('tabla-precios.export');
+    Route::get('/tabla-precios/export-pdf', [TablaPreciosController::class, 'exportPdf'])->name('tabla-precios.export-pdf');
     Route::get('/tabla-precios/plantilla-excel', [TablaPreciosController::class, 'plantillaExcel'])->name('tabla-precios.plantilla');
     Route::post('/tabla-precios/import-excel', [TablaPreciosController::class, 'importExcel'])->name('tabla-precios.import');
 

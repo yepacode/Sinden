@@ -9,6 +9,7 @@ use App\Traits\RegistraActividad;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
+use Barryvdh\DomPDF\Facade\Pdf;
 use App\Exports\TablaPreciosExport;
 use App\Exports\TablaPreciosTemplate;
 use App\Imports\TablaPreciosImport;
@@ -320,6 +321,27 @@ class TablaPreciosController extends Controller
     }
 
     /**
+     * Exportar precios a PDF (mismo layout de las tablas del cliente).
+     * Si se pasa tipo_servicio, exporta solo ese; si no, las 6 tablas.
+     */
+    public function exportPdf(Request $request)
+    {
+        // DomPDF con tablas grandes consume memoria; el hosting puede tener
+        // memory_limit bajo (ej. 32M). Aseguramos memoria suficiente.
+        ini_set('memory_limit', '512M');
+
+        $tipoServicio = $request->tipo_servicio;
+        $matriz = TablaPreciosExport::buildMatriz($tipoServicio);
+
+        $pdf = Pdf::loadView('admin.tabla-precios.pdf', ['matriz' => $matriz])
+            ->setPaper('letter', 'landscape');
+
+        $nombre = 'tabla-precios' . ($tipoServicio ? '-' . $tipoServicio : '') . '.pdf';
+
+        return $pdf->download($nombre);
+    }
+
+    /**
      * Importar precios desde Excel.
      */
     public function importExcel(Request $request)
@@ -335,7 +357,8 @@ class TablaPreciosController extends Controller
         ]);
 
         $import = new TablaPreciosImport();
-        Excel::import($import, $request->file('archivo'));
+        $sheets = Excel::toArray($import, $request->file('archivo'));
+        $import->procesar($sheets);
 
         $actualizados = $import->getActualizados();
         $sinCambio = $import->getSinCambio();

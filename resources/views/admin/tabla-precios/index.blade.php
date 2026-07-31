@@ -10,6 +10,9 @@
             <x-sinden.button variant="outline" icon="bi bi-file-earmark-excel" @click="exportarExcel()">
                 Excel
             </x-sinden.button>
+            <x-sinden.button variant="outline" icon="bi bi-file-earmark-pdf" @click="exportarPdf()">
+                PDF
+            </x-sinden.button>
             <x-sinden.button variant="outline" icon="bi bi-upload" data-bs-toggle="modal" data-bs-target="#modalImport">
                 Importar Excel
             </x-sinden.button>
@@ -479,6 +482,12 @@ function tablaPreciosApp() {
         // ─── Export / Import ──────────────────────────
         exportarExcel() {
             var url = '{{ route("admin.tabla-precios.export") }}';
+            if (this.tipoServicio) url += '?tipo_servicio=' + encodeURIComponent(this.tipoServicio);
+            window.location.href = url;
+        },
+
+        exportarPdf() {
+            var url = '{{ route("admin.tabla-precios.export-pdf") }}';
             if (this.tipoServicio) url += '?tipo_servicio=' + encodeURIComponent(this.tipoServicio);
             window.location.href = url;
         },
