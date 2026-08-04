@@ -560,12 +560,26 @@ select.form-control {
 /* Legibilidad: los badges de fondo CLARO (amarillo/cian) deben llevar SIEMPRE texto
    oscuro. Bootstrap 5.3 los pinta con texto blanco (--bs-badge-color:#fff), lo que
    sobre amarillo es casi ilegible. Aplica en modo claro y oscuro (el fondo sigue
-   siendo amarillo/cian brillante en ambos, asi que el texto oscuro contrasta bien). */
+   siendo amarillo/cian brillante en ambos, asi que el texto oscuro contrasta bien).
+   Cubre bg-warning, bg-info y text-bg-* (con o sin text-dark) e incluye el icono.
+   Alta especificidad + !important para ganar a Bootstrap y a cualquier utilidad. */
 .badge.bg-warning,
 .badge.bg-info,
+.badge.text-bg-warning,
+.badge.text-bg-info,
 [data-theme="dark"] .badge.bg-warning,
-[data-theme="dark"] .badge.bg-info {
+[data-theme="dark"] .badge.bg-info,
+[data-theme="dark"] .badge.text-bg-warning,
+[data-theme="dark"] .badge.text-bg-info {
     color: #1f2937 !important;
+}
+.badge.bg-warning > i,
+.badge.bg-info > i,
+.badge.text-bg-warning > i,
+.badge.text-bg-info > i,
+[data-theme="dark"] .badge.bg-warning > i,
+[data-theme="dark"] .badge.bg-info > i {
+    color: inherit !important;
 }
 
 /* ==============================================

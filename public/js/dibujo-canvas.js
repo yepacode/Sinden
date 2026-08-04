@@ -353,6 +353,11 @@
 
                 saveState();
                 var ptr = fabricCanvas.getPointer(e);
+                // No permitir crear el texto fuera del cuadro (quedaria recortado
+                // por el clipPath = invisible). Sujetar el anclaje dentro del area.
+                var _mrgTxt = 8;
+                ptr.x = Math.max(_mrgTxt, Math.min(canvasSize - _mrgTxt, ptr.x));
+                ptr.y = Math.max(_mrgTxt, Math.min(canvasSize - _mrgTxt, ptr.y));
                 var itext = new fabric.IText('', {
                     left: ptr.x,
                     top: ptr.y,
@@ -583,7 +588,13 @@
         });
 
         // --- OBJECT MODIFIED ---
-        fabricCanvas.on('object:modified', function() {
+        fabricCanvas.on('object:modified', function(opt) {
+            // Si el usuario arrastro/redimensiono un objeto y lo dejo fuera del
+            // cuadro visible, traerlo de vuelta para que no se "esconda" tras el
+            // clipPath (bug: el texto se iba a la esquina y no se recuperaba).
+            if (opt && opt.target) {
+                traerObjetoAlCuadro(opt.target);
+            }
             saveState();
         });
 
@@ -777,6 +788,17 @@
             // Reset: zoom 1, centrar viewport
             fabricCanvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
             clampViewport();
+            // RECUPERAR: traer al cuadro visible cualquier objeto que haya quedado
+            // fuera (escondido tras el clipPath). Asi "Ajustar 100%" sirve para
+            // rescatar texto/figuras corridos sin tener que guardar y reabrir.
+            var _recuperados = 0;
+            fabricCanvas.getObjects().forEach(function (o) {
+                if (traerObjetoAlCuadro(o)) _recuperados++;
+            });
+            if (_recuperados > 0) {
+                fabricCanvas.discardActiveObject();
+                saveState();
+            }
             updateZoomLabel();
             fabricCanvas.renderAll();
             return;
@@ -819,6 +841,39 @@
         }
 
         fabricCanvas.setViewportTransform(vpt);
+    }
+
+    // Trae un objeto de vuelta al cuadro visible (clipPath [0..canvasSize]) si
+    // quedo total o parcialmente afuera, para que no se "esconda". Trabaja en
+    // coordenadas absolutas del lienzo (sin el zoom/paneo). Devuelve true si
+    // tuvo que moverlo.
+    function traerObjetoAlCuadro(obj) {
+        if (!obj || !fabricCanvas || !canvasSize) return false;
+        var bb = obj.getBoundingRect(true); // true = absoluto, ignora viewport
+        var m = 4; // margen minimo visible
+        var dx = 0, dy = 0;
+
+        if (bb.width <= canvasSize) {
+            if (bb.left < m) dx = m - bb.left;
+            else if (bb.left + bb.width > canvasSize - m) dx = (canvasSize - m) - (bb.left + bb.width);
+        } else if (bb.left < m) {
+            dx = m - bb.left; // mas ancho que el cuadro: alinear al borde izquierdo
+        }
+
+        if (bb.height <= canvasSize) {
+            if (bb.top < m) dy = m - bb.top;
+            else if (bb.top + bb.height > canvasSize - m) dy = (canvasSize - m) - (bb.top + bb.height);
+        } else if (bb.top < m) {
+            dy = m - bb.top;
+        }
+
+        if (dx !== 0 || dy !== 0) {
+            obj.left += dx;
+            obj.top += dy;
+            obj.setCoords();
+            return true;
+        }
+        return false;
     }
 
     // =============================================

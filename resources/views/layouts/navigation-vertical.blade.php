@@ -100,7 +100,7 @@
         <div class="nav-item {{ request()->routeIs('recepcion.ordenes.index') || request()->routeIs('recepcion.ordenes.show') ? 'active' : '' }}">
             <a href="{{ route('recepcion.ordenes.index') }}" class="nav-link">
                 <i class="bi bi-search"></i>
-                <span>Ordenes</span>
+                <span>Buscar Ordenes</span>
             </a>
         </div>
 

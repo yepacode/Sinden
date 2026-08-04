@@ -103,14 +103,14 @@
         }
     </script>
 
-    {{-- SINDEN CSS --}}
-    <link href="{{ asset('css/gva-global.css') }}" rel="stylesheet">
-    <link href="{{ asset('css/gva-dashboard.css') }}" rel="stylesheet">
-    <link href="{{ asset('css/gva-components.css') }}" rel="stylesheet">
+    {{-- SINDEN CSS (con cache-busting por filemtime para que el navegador tome siempre la ultima version) --}}
+    <link href="{{ asset('css/gva-global.css') }}?v={{ filemtime(public_path('css/gva-global.css')) }}" rel="stylesheet">
+    <link href="{{ asset('css/gva-dashboard.css') }}?v={{ filemtime(public_path('css/gva-dashboard.css')) }}" rel="stylesheet">
+    <link href="{{ asset('css/gva-components.css') }}?v={{ filemtime(public_path('css/gva-components.css')) }}" rel="stylesheet">
     <link href="{{ asset('css/sinden-components.css') }}?v={{ filemtime(public_path('css/sinden-components.css')) }}" rel="stylesheet">
 
     {{-- Conexion Handler CSS --}}
-    <link href="{{ asset('css/conexion-handler.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/conexion-handler.css') }}?v={{ filemtime(public_path('css/conexion-handler.css')) }}" rel="stylesheet">
 
     {{-- DataTables CSS --}}
     <link href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css" rel="stylesheet">
