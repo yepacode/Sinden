@@ -35,13 +35,29 @@ class ImageHelper
     }
 
     /**
-     * Genera miniatura cuadrada desde una imagen ya cuadrada.
+     * Genera una miniatura cuadrada de size x size preservando la proporcion.
+     *
+     * IMPORTANTE: NO se usa resize($size, $size) porque eso ESTIRA la imagen y
+     * deforma el contenido (sobre todo el texto de los bosquejos) cuando la fuente
+     * no es perfectamente cuadrada. En su lugar se escala manteniendo la proporcion
+     * y se centra sobre un lienzo blanco cuadrado (padding), igual que makeSquare().
      */
     public static function makeSquareThumbnail(string $sourcePath, string $thumbPath, int $size = 300, int $quality = 80): void
     {
         $img = Image::make($sourcePath);
-        $img->resize($size, $size);
-        $img->save($thumbPath, $quality);
+
+        // Escalar para que quepa dentro de size x size SIN deformar (mantiene proporcion).
+        $img->resize($size, $size, function ($constraint) {
+            $constraint->aspectRatio();
+        });
+
+        // Centrar sobre un lienzo blanco cuadrado para que la miniatura siempre sea
+        // cuadrada y el contenido nunca se estire (solo se agrega padding si hace falta).
+        $canvas = Image::canvas($size, $size, '#ffffff');
+        $canvas->insert($img, 'center');
+
+        $canvas->save($thumbPath, $quality);
         $img->destroy();
+        $canvas->destroy();
     }
 }

@@ -46,9 +46,14 @@
             <span>Estas trabajando en esta orden. Se liberara automaticamente al salir o por inactividad.</span>
         </div>
     @else
+        @php $lockRole = $lockResult['locked_by_role'] ?? ''; @endphp
         <div class="lock-banner locked-other">
             <i class="bi bi-exclamation-triangle-fill"></i>
-            <span>Esta orden esta bloqueada por <strong>{{ $lockResult['locked_by'] ?? 'otro usuario' }}</strong> ({{ $lockResult['locked_by_role'] ?? '' }}). No puedes editar en este momento.</span>
+            @if($lockRole && $lockRole !== 'Operario')
+                <span><strong>Esta orden no esta disponible en este momento.</strong> {{ $lockResult['locked_by'] ?? 'Recepcion' }} ({{ $lockRole }}) esta editando los detalles. Intenta de nuevo en unos minutos.</span>
+            @else
+                <span>Esta orden esta bloqueada por <strong>{{ $lockResult['locked_by'] ?? 'otro usuario' }}</strong> ({{ $lockRole }}). No puedes editar en este momento.</span>
+            @endif
         </div>
     @endif
 

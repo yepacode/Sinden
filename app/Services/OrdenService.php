@@ -723,7 +723,26 @@ class OrdenService
                 continue;
             }
 
-            // modo 'edicion': transiciones
+            // modo 'edicion': transiciones.
+            // OPCION A (fix rebote de piezas transferidas): Recepcion SOLO debe cambiar
+            // el operario de una pieza si REALMENTE lo cambio en el formulario respecto
+            // a lo que cargo (operario_original_id). Si no lo toco, se respeta la BD: un
+            // operario pudo haber transferido / tomado / dejado en cola la pieza mientras
+            // Recepcion tenia la orden abierta, y ese cambio NO se debe pisar.
+            $tieneOriginal = array_key_exists('operario_original_id', $payload);
+            $operarioOriginalRaw = $payload['operario_original_id'] ?? null;
+            $operarioOriginal = ($operarioOriginalRaw === '' || $operarioOriginalRaw === null)
+                ? null
+                : (int) $operarioOriginalRaw;
+
+            // Si el formulario no manda el original (compatibilidad) o Recepcion no
+            // cambio ese campo, NO se toca la asignacion viva de la pieza.
+            if (!$tieneOriginal || $operarioNuevo === $operarioOriginal) {
+                continue;
+            }
+
+            // Recepcion SI cambio el operario a proposito: aplicar la transicion desde el
+            // estado ACTUAL en BD (no desde el valor viejo del formulario).
             if ($operarioAnterior === $operarioNuevo) {
                 continue;
             }

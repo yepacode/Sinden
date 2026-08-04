@@ -496,7 +496,7 @@ function configuracionApp() {
 
         // Sistema
         timeout_autoguardado_recepcion: @json($configs['timeout_autoguardado_recepcion']->valor ?? '5'),
-        timeout_forzar_cierre: @json($configs['timeout_forzar_cierre']->valor ?? '60'),
+        timeout_forzar_cierre: @json($configs['timeout_forzar_cierre']->valor ?? '15'),
 
         // Borradores
         dias_expiracion_borradores: @json($configs['dias_expiracion_borradores']->valor ?? '30'),
@@ -814,7 +814,7 @@ function configuracionApp() {
                     color_texto_bienvenida: this.color_texto_bienvenida || '#1f2937',
                     porcentaje_iva_defecto: parseFloat(this.porcentaje_iva_defecto) || 19,
                     timeout_autoguardado_recepcion: parseInt(this.timeout_autoguardado_recepcion) || 5,
-                    timeout_forzar_cierre: parseInt(this.timeout_forzar_cierre) || 60,
+                    timeout_forzar_cierre: parseInt(this.timeout_forzar_cierre) || 15,
                     dias_expiracion_borradores: parseInt(this.dias_expiracion_borradores) || 30,
                     dias_borradores_recientes: parseInt(this.dias_borradores_recientes) || 7,
                     materiales_disponibles: this.materiales_disponibles,

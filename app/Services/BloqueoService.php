@@ -131,7 +131,7 @@ class BloqueoService
 
         $bloqueador = User::find($orden->bloqueada_por);
 
-        $timeoutForzar = ConfiguracionSistema::get('timeout_forzar_cierre', 60);
+        $timeoutForzar = ConfiguracionSistema::get('timeout_forzar_cierre', 15);
 
         // Limpiar notificaciones de forzar_cierre obsoletas (que quedaron colgadas
         // sin marcarse como leidas porque el operario cerro la pagina antes del countdown).
@@ -200,7 +200,7 @@ class BloqueoService
             return ['success' => false, 'error' => 'No tienes suficiente jerarquia para forzar el cierre.'];
         }
 
-        $timeout = ConfiguracionSistema::get('timeout_forzar_cierre', 60);
+        $timeout = ConfiguracionSistema::get('timeout_forzar_cierre', 15);
 
         // Crear notificacion para el operario
         Notificacion::create([
@@ -234,7 +234,23 @@ class BloqueoService
      */
     protected function haExpirado(Orden $orden): bool
     {
-        return false;
+        if (!$orden->bloqueada_por || !$orden->bloqueada_en) {
+            return false;
+        }
+
+        $bloqueador = User::find($orden->bloqueada_por);
+
+        // Los bloqueos de OPERARIO no expiran por inactividad (se liberan al salir,
+        // por forzar cierre o cierre de la sesion de trabajo).
+        if (!$bloqueador || $bloqueador->isOperario()) {
+            return false;
+        }
+
+        // Los bloqueos de edicion de Recepcion/Admin/Contabilidad SI expiran por
+        // inactividad, para no dejar la orden trabada si cierran la pestana sin liberar.
+        // El autoguardado renueva el bloqueo, asi que solo expira si de verdad se abandono.
+        $minutos = max(5, (int) ConfiguracionSistema::get('timeout_autoguardado_recepcion', 5) * 2);
+        return $orden->bloqueada_en->lt(now()->subMinutes($minutos));
     }
 
     /**

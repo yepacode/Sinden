@@ -107,6 +107,7 @@ Route::middleware(['auth', 'verified', 'role:Administrador|Recepcion'])
         // Ordenes - Gestion / escritura (rutas con parametro {orden})
         Route::get('/ordenes/{orden}/editar', [OrdenController::class, 'edit'])->name('ordenes.edit')->middleware('role:Administrador|Recepcion|Contabilidad');
         Route::put('/ordenes/{orden}', [OrdenController::class, 'update'])->name('ordenes.update')->middleware('role:Administrador|Recepcion|Contabilidad');
+        Route::post('/ordenes/{orden}/liberar-edicion', [OrdenController::class, 'liberarEdicion'])->name('ordenes.liberar-edicion')->middleware('role:Administrador|Recepcion|Contabilidad');
         Route::post('/ordenes/{orden}/copiar', [OrdenController::class, 'copiar'])->name('ordenes.copiar');
         Route::post('/ordenes/{orden}/anular', [OrdenController::class, 'anular'])->name('ordenes.anular');
         Route::delete('/ordenes/{orden}', [OrdenController::class, 'destroy'])->name('ordenes.destroy');

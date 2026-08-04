@@ -60,7 +60,7 @@ class ConfiguracionSistemaSeeder extends Seeder
             ],
             [
                 'clave' => 'timeout_forzar_cierre',
-                'valor' => '60',
+                'valor' => '15',
                 'tipo' => 'entero',
                 'descripcion' => 'Segundos para forzar cierre de orden',
             ],

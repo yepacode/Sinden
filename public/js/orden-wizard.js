@@ -1149,7 +1149,7 @@ function agregarFilaPieza(opts) {
         });
     }
 
-    var html = '<tr id="piezaRow_' + idx + '" class="pieza-row" data-idx="' + idx + '" data-bosquejo-index="">'
+    var html = '<tr id="piezaRow_' + idx + '" class="pieza-row" data-idx="' + idx + '" data-bosquejo-index="" data-operario-original="">'
         + '<td class="pieza-bosquejo-cell text-center">'
         + '  <div class="bosquejo-empty-actions">'
         + '    <button type="button" class="btn btn-xs btn-outline-secondary" onclick="piezaSubirArchivo(' + idx + ')" title="Subir archivo"><i class="bi bi-upload"></i></button>'
@@ -1464,6 +1464,9 @@ function recopilarDatosFormulario() {
         var rowIdx = $(this).data('idx');
         var piezaId = $(this).data('pieza-id');
         var operarioVal = $(this).find('.pieza-operario').val();
+        var operarioOrigRaw = $(this).attr('data-operario-original');
+        var operarioOriginal = (operarioOrigRaw !== undefined && operarioOrigRaw !== '' && operarioOrigRaw !== null)
+            ? parseInt(operarioOrigRaw) : null;
         piezas.push({
             id: piezaId || null,
             nombre: $(this).find('.pieza-nombre').val(),
@@ -1472,7 +1475,8 @@ function recopilarDatosFormulario() {
             calibre: $(this).find('.pieza-calibre').val() || null,
             notas: $('#piezaNotasRow_' + rowIdx).find('.pieza-notas').val() || null,
             bosquejo_index: (bosquejoIdx !== '' && bosquejoIdx !== undefined) ? parseInt(bosquejoIdx) : null,
-            operario_id: operarioVal ? parseInt(operarioVal) : null
+            operario_id: operarioVal ? parseInt(operarioVal) : null,
+            operario_original_id: operarioOriginal
         });
     });
 

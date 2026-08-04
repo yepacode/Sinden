@@ -788,7 +788,9 @@
 .pieza-bosquejo-cell .pieza-bosquejo-thumb {
     width: 80px;
     height: 60px;
-    object-fit: cover;
+    /* contain (no cover) para NO recortar el texto del bosquejo arriba/abajo */
+    object-fit: contain;
+    background: #fff;
     border-radius: 4px;
     border: 1px solid #dee2e6;
     cursor: pointer;

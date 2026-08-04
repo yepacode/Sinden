@@ -132,6 +132,10 @@ function cargarPiezas() {
         if (pieza.operario_actual_id) {
             $row.find('.pieza-operario').val(String(pieza.operario_actual_id));
         }
+        // Guardar el operario ORIGINAL con el que se cargo la pieza. El backend lo usa
+        // (fix Opcion A) para NO revertir una transferencia que un operario hizo en vivo:
+        // Recepcion solo cambia el operario si de verdad modifica este campo.
+        $row.attr('data-operario-original', pieza.operario_actual_id ? String(pieza.operario_actual_id) : '');
 
         generarEspecificacion(idx);
     });
@@ -230,3 +234,28 @@ function cargarFirma() {
     }
     marcarStepCompletado(4);
 }
+
+// ==========================================
+// Liberar el candado de edicion al salir de la pagina, para que los operarios
+// puedan volver a trabajar la orden de inmediato (no esperar a que expire).
+// ==========================================
+(function () {
+    var liberado = false;
+    function liberarEdicionOrden() {
+        if (liberado) return;
+        try {
+            var id = (typeof ORDEN_DATA !== 'undefined' && ORDEN_DATA && ORDEN_DATA.id) ? ORDEN_DATA.id : null;
+            if (!id) return;
+            var metaTok = document.querySelector('meta[name="csrf-token"]');
+            var token = metaTok ? metaTok.getAttribute('content') : '';
+            var fd = new FormData();
+            fd.append('_token', token);
+            if (navigator.sendBeacon) {
+                navigator.sendBeacon('/recepcion/ordenes/' + id + '/liberar-edicion', fd);
+                liberado = true;
+            }
+        } catch (e) {}
+    }
+    window.addEventListener('pagehide', liberarEdicionOrden);
+    window.addEventListener('beforeunload', liberarEdicionOrden);
+})();

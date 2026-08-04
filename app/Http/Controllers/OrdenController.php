@@ -155,6 +155,9 @@ class OrdenController extends Controller
 
             $orden->refresh();
 
+            // Recepcion termino de generar: liberar el candado de edicion.
+            app(\App\Services\BloqueoService::class)->desbloquear($orden, $user);
+
             if ($eraBorrador) {
                 $this->registrarActualizacion(
                     'orden.creada',
@@ -512,6 +515,11 @@ class OrdenController extends Controller
             }
         }
 
+        // Recepcion adquiere el candado de la orden mientras la edita. Asi, si un
+        // operario intenta abrirla, vera "orden no disponible - Recepcion editando",
+        // y se evita la edicion simultanea que pisaba el trabajo de los operarios.
+        app(\App\Services\BloqueoService::class)->bloquear($orden, auth()->user());
+
         $orden->load(['cliente', 'items', 'bosquejos', 'piezas', 'pagos']);
 
         $materiales = ConfiguracionSistema::get('materiales_disponibles', []);
@@ -591,6 +599,9 @@ class OrdenController extends Controller
         $user = $request->user();
         $valoresOriginales = $orden->getOriginal();
 
+        // Mantener vivo el candado de edicion de Recepcion mientras autoguarda/guarda.
+        app(\App\Services\BloqueoService::class)->renovarBloqueo($orden, $user);
+
         try {
             $this->ordenService->guardarBorrador($data, $user, $orden);
 
@@ -624,6 +635,17 @@ class OrdenController extends Controller
                 'message' => 'Error al actualizar: ' . $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * POST /recepcion/ordenes/{orden}/liberar-edicion
+     * Libera el candado de edicion cuando Recepcion sale del asistente (via beacon),
+     * para que los operarios puedan volver a trabajar la orden de inmediato.
+     */
+    public function liberarEdicion(Orden $orden)
+    {
+        app(\App\Services\BloqueoService::class)->desbloquear($orden, auth()->user());
+        return response()->json(['success' => true]);
     }
 
     /**
