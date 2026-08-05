@@ -105,6 +105,31 @@
         setTimeout(function() { restaurarScrollAncestros(textScrollSnapshot); }, 0);
     }
 
+    // Snapshot de la VISTA (viewportTransform) tomado ANTES de entrar en edicion de
+    // texto. Al enfocar el textarea, el navegador/Fabric puede DESPLAZAR el lienzo
+    // (el "salto" que mueve el dibujo). Guardamos la vista y la restauramos.
+    var textVptSnapshot = null;
+
+    // Restaura la vista del lienzo (viewport) + el scroll, ahora y en los siguientes
+    // ~450ms, para ANULAR el salto al escribir texto: el dibujo debe quedarse
+    // EXACTAMENTE donde estaba. Se repite porque el desplazamiento del navegador
+    // puede llegar de forma asincrona (sobre todo en tablets al abrir el teclado).
+    function restaurarVistaTexto() {
+        var aplicar = function() {
+            if (fabricCanvas && textVptSnapshot) {
+                var v = fabricCanvas.viewportTransform;
+                if (v[0] !== textVptSnapshot[0] || v[4] !== textVptSnapshot[4] || v[5] !== textVptSnapshot[5]) {
+                    fabricCanvas.setViewportTransform(textVptSnapshot.slice());
+                    fabricCanvas.requestRenderAll();
+                }
+            }
+            if (textScrollSnapshot) restaurarScrollAncestros(textScrollSnapshot);
+        };
+        aplicar();
+        requestAnimationFrame(aplicar);
+        [0, 40, 90, 160, 260, 400].forEach(function(ms) { setTimeout(aplicar, ms); });
+    }
+
     // =============================================
     // INICIALIZACION
     // =============================================
@@ -374,9 +399,11 @@
                 setTimeout(function() {
                     if (itext) {
                         var wrapper = document.getElementById('dibujoCanvasWrapper');
-                        // Capturar el scroll ANTES de enterEditing(): Fabric enfoca su
-                        // textarea internamente (sin preventScroll) y eso desplazaria el modal.
+                        // Capturar el scroll Y la vista ANTES de enterEditing(): Fabric
+                        // enfoca su textarea internamente (sin preventScroll) y eso desplaza
+                        // el modal / mueve el lienzo (el "salto"). Guardamos ambos.
                         textScrollSnapshot = capturarScrollAncestros(wrapper || document.body);
+                        textVptSnapshot = fabricCanvas.viewportTransform.slice();
                         itext.enterEditing();
                         // Fabric.js crea el hidden textarea en <body>, pero Bootstrap modal
                         // atrapa el focus dentro del modal. Moverlo dentro del modal.
@@ -387,8 +414,8 @@
                             try { itext.hiddenTextarea.focus({ preventScroll: true }); }
                             catch (err) { itext.hiddenTextarea.focus(); }
                         }
-                        // Restaurar la posicion previa (Fabric ya pudo haber desplazado).
-                        restaurarSnapshotScroll();
+                        // Anular el salto: devolver la vista y el scroll a como estaban.
+                        restaurarVistaTexto();
                     }
                 }, 100);
                 return;
@@ -610,9 +637,9 @@
                 }
                 try { itext.hiddenTextarea.focus({ preventScroll: true }); }
                 catch (err) { itext.hiddenTextarea.focus(); }
-                // Restaurar el scroll capturado antes de entrar en edicion (este
-                // handler corre DENTRO de enterEditing, despues del focus interno).
-                restaurarSnapshotScroll();
+                // Restaurar la vista + el scroll capturados antes de entrar en edicion
+                // (este handler corre DENTRO de enterEditing, despues del focus interno).
+                restaurarVistaTexto();
             }
         });
 
@@ -799,6 +826,16 @@
                 fabricCanvas.discardActiveObject();
                 saveState();
             }
+            // Por si el navegador dejo el modal/ventana desplazado (al escribir texto),
+            // devolver el scroll a 0 para que el lienzo vuelva a quedar a la vista.
+            (function () {
+                var n = document.getElementById('dibujoCanvasWrapper');
+                while (n && n !== document.body && n !== document.documentElement) {
+                    n.scrollTop = 0; n.scrollLeft = 0;
+                    n = n.parentElement;
+                }
+                try { window.scrollTo(0, 0); } catch (e) {}
+            })();
             updateZoomLabel();
             fabricCanvas.renderAll();
             return;
