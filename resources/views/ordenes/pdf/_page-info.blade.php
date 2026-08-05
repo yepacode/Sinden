@@ -120,7 +120,7 @@
                         <td>{{ $i + 1 }}</td>
                         <td>{{ $item->codigo ?? '-' }}</td>
                         <td>{{ $item->descripcion }}</td>
-                        <td class="text-center">{{ number_format($item->cantidad, 0) }}</td>
+                        <td class="text-center">{{ \App\Helpers\Format::cantidad($item->cantidad) }}</td>
                         <td class="text-end">${{ number_format($item->precio_unitario, 0, ',', '.') }}</td>
                         <td class="text-center">{{ number_format($item->porcentaje_iva, 0) }}%</td>
                         <td class="text-center">{{ $item->descuento_porcentaje > 0 ? number_format($item->descuento_porcentaje, 2) . '%' : '-' }}</td>

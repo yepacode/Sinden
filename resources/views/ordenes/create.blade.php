@@ -330,7 +330,7 @@ var ROUTES = {
     panel: '{{ route("recepcion.panel") }}'
 };
 </script>
-<script src="{{ asset('js/firma-canvas.js') }}"></script>
-<script src="{{ asset('js/dibujo-canvas.js') }}"></script>
+<script src="{{ asset('js/firma-canvas.js') }}?v={{ filemtime(public_path('js/firma-canvas.js')) }}"></script>
+<script src="{{ asset('js/dibujo-canvas.js') }}?v={{ filemtime(public_path('js/dibujo-canvas.js')) }}"></script>
 <script src="{{ asset('js/orden-wizard.js') }}?v={{ filemtime(public_path('js/orden-wizard.js')) }}"></script>
 @endpush

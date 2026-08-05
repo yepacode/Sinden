@@ -47,7 +47,9 @@ function cargarItems() {
         $row.find('.item-catalogo-id').val(item.catalogo_item_id || '');
         $row.find('.item-codigo').val(item.codigo || '');
         $row.find('.item-descripcion').val(item.descripcion || '');
-        $row.find('.item-cantidad').val(item.cantidad || 1).each(function(){ autoExpandCantidad(this); });
+        // Cantidad "inteligente": 44.00 -> 44, 44.5 -> 44,5 (no forzar ",00" al cargar).
+        var _cantItem = parseFloat(item.cantidad);
+        $row.find('.item-cantidad').val(isNaN(_cantItem) ? 1 : _cantItem).each(function(){ autoExpandCantidad(this); });
         setValorMoneda($row.find('.item-precio'), item.precio_unitario || 0);
         $row.find('.item-iva-check').prop('checked', parseFloat(item.porcentaje_iva) > 0);
         $row.find('.item-descuento').val(parseInt(item.descuento_porcentaje, 10) || 0).each(function(){ autoExpandCantidad(this); });

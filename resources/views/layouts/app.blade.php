@@ -244,7 +244,7 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
     {{-- Theme toggle (dark mode) --}}
-    <script src="{{ asset('js/theme-toggle.js') }}"></script>
+    <script src="{{ asset('js/theme-toggle.js') }}?v={{ filemtime(public_path('js/theme-toggle.js')) }}"></script>
 
     {{-- Bootstrap 5 JS (para modales) --}}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -271,17 +271,17 @@
     {{-- Flatpickr (date picker unificado) --}}
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/es.js"></script>
-    <script src="{{ asset('js/flatpickr-init.js') }}"></script>
+    <script src="{{ asset('js/flatpickr-init.js') }}?v={{ filemtime(public_path('js/flatpickr-init.js')) }}"></script>
 
     {{-- Main JS --}}
-    <script src="{{ asset('js/gva-main.js') }}"></script>
+    <script src="{{ asset('js/gva-main.js') }}?v={{ filemtime(public_path('js/gva-main.js')) }}"></script>
 
     {{-- Notificaciones --}}
     <div id="notifToastContainer"></div>
-    <script src="{{ asset('js/notificaciones.js') }}"></script>
+    <script src="{{ asset('js/notificaciones.js') }}?v={{ filemtime(public_path('js/notificaciones.js')) }}"></script>
 
     {{-- Conexion Handler (debe ir despues de jQuery y SweetAlert2) --}}
-    <script src="{{ asset('js/conexion-handler.js') }}"></script>
+    <script src="{{ asset('js/conexion-handler.js') }}?v={{ filemtime(public_path('js/conexion-handler.js')) }}"></script>
 
     @stack('scripts')
 </body>

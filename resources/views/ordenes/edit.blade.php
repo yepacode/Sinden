@@ -358,8 +358,8 @@ var ORDEN_DATA = @json($ordenData);
 var IS_GENERATED = {{ $orden->estado_trabajo !== 'borrador' ? 'true' : 'false' }};
 var IS_ADMIN = {{ auth()->user()->hasRole('Administrador') ? 'true' : 'false' }};
 </script>
-<script src="{{ asset('js/firma-canvas.js') }}"></script>
-<script src="{{ asset('js/dibujo-canvas.js') }}"></script>
+<script src="{{ asset('js/firma-canvas.js') }}?v={{ filemtime(public_path('js/firma-canvas.js')) }}"></script>
+<script src="{{ asset('js/dibujo-canvas.js') }}?v={{ filemtime(public_path('js/dibujo-canvas.js')) }}"></script>
 <script src="{{ asset('js/orden-wizard.js') }}?v={{ filemtime(public_path('js/orden-wizard.js')) }}"></script>
 <script src="{{ asset('js/orden-edit-init.js') }}?v={{ filemtime(public_path('js/orden-edit-init.js')) }}"></script>
 @endpush

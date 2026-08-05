@@ -290,7 +290,7 @@
 @endsection
 
 @push('scripts')
-<script src="{{ asset('js/orden-detalle.js') }}"></script>
+<script src="{{ asset('js/orden-detalle.js') }}?v={{ filemtime(public_path('js/orden-detalle.js')) }}"></script>
 <script>
 var ORDEN_ID = {{ $orden->id }};
 var CSRF_TOKEN = '{{ csrf_token() }}';

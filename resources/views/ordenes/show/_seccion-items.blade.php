@@ -26,7 +26,7 @@
                                 <td class="text-muted">{{ $i + 1 }}</td>
                                 <td><span class="badge bg-light text-dark border">{{ $item->codigo ?? '-' }}</span></td>
                                 <td>{{ $item->descripcion }}</td>
-                                <td class="text-center">{{ number_format($item->cantidad, 0) }}</td>
+                                <td class="text-center">{{ \App\Helpers\Format::cantidad($item->cantidad) }}</td>
                                 <td class="text-end">${{ number_format($item->precio_unitario, 0, ',', '.') }}</td>
                                 <td class="text-center">{{ number_format($item->porcentaje_iva, 0) }}%</td>
                                 <td class="text-center">
