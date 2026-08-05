@@ -20,6 +20,11 @@ class RegenerarThumbnailsBosquejos extends Command
 
     public function handle(): int
     {
+        // Procesar imagenes grandes necesita mas memoria que el limite CLI por
+        // defecto (en algunos hosts es 32M). Subirlo evita el error
+        // "Allowed memory size exhausted" al regenerar en produccion.
+        @ini_set('memory_limit', '512M');
+
         $ordenId = $this->option('orden');
         $ok = 0;
         $sinFuente = 0;
@@ -69,5 +74,8 @@ class RegenerarThumbnailsBosquejos extends Command
             $err++;
             $this->warn("  id={$modelo->id}: {$e->getMessage()}");
         }
+
+        // Liberar la memoria de la imagen procesada antes de la siguiente.
+        gc_collect_cycles();
     }
 }
