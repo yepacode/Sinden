@@ -199,6 +199,29 @@
 
     {{-- Contenido Principal --}}
     <main class="main-content" id="mainContent">
+        {{-- Tablet en horizontal (tactil, 1025-1366px): arrancar con el menu lateral
+             CERRADO para no quitar visibilidad de pantalla (lo pidio el cliente). Se
+             corre INLINE (no en DOMContentLoaded) para evitar el parpadeo de ver el
+             menu abierto y luego cerrarse. El boton de las barras lo abre dentro de la
+             sesion. Escritorio (>1366 o sin tactil) y tablet vertical (<=1024, off-canvas)
+             NO cambian. Se agregan .collapsed + .expanded juntos (el toggle los mueve en
+             par). Deteccion de tactil robusta (maxTouchPoints cubre iPad en modo escritorio). --}}
+        <script>
+        (function () {
+            try {
+                var w = window.innerWidth;
+                var esTactil = navigator.maxTouchPoints > 0
+                    || 'ontouchstart' in window
+                    || (window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+                if (w > 1024 && w <= 1366 && esTactil) {
+                    var sb = document.getElementById('sidebar');
+                    var mc = document.getElementById('mainContent');
+                    if (sb) sb.classList.add('collapsed');
+                    if (mc) mc.classList.add('expanded');
+                }
+            } catch (e) { /* noop */ }
+        })();
+        </script>
         {{-- Flash Messages --}}
         @if(session('success'))
             <div class="alert alert-success">

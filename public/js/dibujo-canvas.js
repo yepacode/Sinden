@@ -130,6 +130,39 @@
         [0, 40, 90, 160, 260, 400].forEach(function(ms) { setTimeout(aplicar, ms); });
     }
 
+    // Ancla el <textarea> oculto de Fabric en una posicion INOCUA y evita que se
+    // reposicione en cada tecla. Esta es la causa raiz del "salto por caracter":
+    // al escribir, Fabric mueve ese textarea para seguir el cursor; como esta
+    // enfocado, el navegador desplaza el contenedor para "traerlo a la vista" y el
+    // dibujo salta con cada letra (mas notorio al Importar Matriz, porque la imagen
+    // de fondo hace el modal mas alto y con scroll). Lo fijamos al viewport, 1x1,
+    // invisible (enfocarlo asi NUNCA provoca scroll) y anulamos updateTextareaPosition.
+    function anclarTextareaTexto(itext) {
+        if (!itext || !itext.hiddenTextarea) return;
+        var ta = itext.hiddenTextarea;
+        // Debe permanecer DENTRO del modal (Fabric lo crea en <body>) para que el
+        // focus-trap de Bootstrap no le robe el foco y se pueda escribir.
+        var wrapper = document.getElementById('dibujoCanvasWrapper');
+        if (wrapper && ta.parentElement !== wrapper) {
+            wrapper.appendChild(ta);
+        }
+        // Posicion fija, minima e invisible: enfocarla no desplaza nada.
+        ta.style.position = 'fixed';
+        ta.style.top = '0px';
+        ta.style.left = '0px';
+        ta.style.width = '1px';
+        ta.style.height = '1px';
+        ta.style.opacity = '0';
+        ta.style.zIndex = '-1';
+        // Impedir que Fabric lo reubique en cada pulsacion (esto es lo que causaba
+        // el salto por caracter). El cursor se dibuja en el canvas, no depende del
+        // textarea, asi que anular su reposicion no afecta la edicion.
+        itext.updateTextareaPosition = function() {};
+        // Enfocar sin que el navegador haga scroll.
+        try { ta.focus({ preventScroll: true }); }
+        catch (err) { ta.focus(); }
+    }
+
     // =============================================
     // INICIALIZACION
     // =============================================
@@ -405,16 +438,10 @@
                         textScrollSnapshot = capturarScrollAncestros(wrapper || document.body);
                         textVptSnapshot = fabricCanvas.viewportTransform.slice();
                         itext.enterEditing();
-                        // Fabric.js crea el hidden textarea en <body>, pero Bootstrap modal
-                        // atrapa el focus dentro del modal. Moverlo dentro del modal.
-                        if (itext.hiddenTextarea) {
-                            if (wrapper && itext.hiddenTextarea.parentElement !== wrapper) {
-                                wrapper.appendChild(itext.hiddenTextarea);
-                            }
-                            try { itext.hiddenTextarea.focus({ preventScroll: true }); }
-                            catch (err) { itext.hiddenTextarea.focus(); }
-                        }
-                        // Anular el salto: devolver la vista y el scroll a como estaban.
+                        // Anclar el textarea oculto (dentro del modal, fijo e invisible)
+                        // y anular su reposicion por tecla: elimina el salto por caracter.
+                        anclarTextareaTexto(itext);
+                        // Anular el salto inicial: devolver la vista y el scroll a como estaban.
                         restaurarVistaTexto();
                     }
                 }, 100);
@@ -631,14 +658,9 @@
         fabricCanvas.on('text:editing:entered', function(opt) {
             var itext = opt.target;
             if (itext && itext.hiddenTextarea) {
-                var wrapper = document.getElementById('dibujoCanvasWrapper');
-                if (wrapper && itext.hiddenTextarea.parentElement !== wrapper) {
-                    wrapper.appendChild(itext.hiddenTextarea);
-                }
-                try { itext.hiddenTextarea.focus({ preventScroll: true }); }
-                catch (err) { itext.hiddenTextarea.focus(); }
-                // Restaurar la vista + el scroll capturados antes de entrar en edicion
-                // (este handler corre DENTRO de enterEditing, despues del focus interno).
+                // Anclar el textarea (dentro del modal, fijo e invisible) y anular su
+                // reposicion por tecla; luego restaurar la vista/scroll previos.
+                anclarTextareaTexto(itext);
                 restaurarVistaTexto();
             }
         });

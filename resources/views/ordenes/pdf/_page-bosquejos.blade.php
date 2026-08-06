@@ -15,7 +15,13 @@
                                 Imagen no disponible
                             </div>
                         @endif
-                        <div class="bosquejo-nombre">{{ $bosquejo->nombre ?? '' }}</div>
+                        <div class="bosquejo-nombre">
+                            @if(!empty($bosquejo->pieza_nombre))
+                                {{ $bosquejo->pieza_nombre }} &middot; Cant: {{ \App\Helpers\Format::cantidad($bosquejo->pieza_cantidad) }}
+                            @else
+                                {{ $bosquejo->nombre ?? '' }}
+                            @endif
+                        </div>
                     </td>
                 @endforeach
                 {{-- Celdas vacias para completar la fila --}}

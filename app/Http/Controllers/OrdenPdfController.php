@@ -138,10 +138,17 @@ class OrdenPdfController extends Controller
 
         // Bosquejos con base64
         $useThumbnail = $bosquejosCols >= 3;
-        $bosquejosData = $orden->bosquejos->sortBy('orden_visual')->map(function ($b) use ($useThumbnail) {
+        // Mapa bosquejo_id -> pieza, para identificar cada bosquejo en el PDF con el
+        // nombre de su pieza y la cantidad (lo pidio el cliente: que se sepa a que
+        // corresponde cada dibujo, no solo "Dibujo N").
+        $piezaPorBosquejo = $orden->piezas->keyBy('orden_bosquejo_id');
+        $bosquejosData = $orden->bosquejos->sortBy('orden_visual')->map(function ($b) use ($useThumbnail, $piezaPorBosquejo) {
             $ruta = $useThumbnail && $b->ruta_miniatura ? $b->ruta_miniatura : $b->ruta_archivo;
+            $pieza = $piezaPorBosquejo->get($b->id);
             return (object) [
                 'nombre' => $b->nombre,
+                'pieza_nombre' => $pieza ? $pieza->nombre : null,
+                'pieza_cantidad' => $pieza ? $pieza->cantidad : null,
                 'base64' => $this->imageToBase64($ruta),
             ];
         });
