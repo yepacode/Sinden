@@ -31,7 +31,7 @@
                                 <td class="text-center">{{ number_format($item->porcentaje_iva, 0) }}%</td>
                                 <td class="text-center">
                                     @if($item->descuento_porcentaje > 0)
-                                        <span class="text-danger">{{ number_format($item->descuento_porcentaje, 2) }}%</span>
+                                        <span class="text-danger">{{ \App\Helpers\Format::cantidad($item->descuento_porcentaje) }}%</span>
                                         <div class="small text-muted">-${{ number_format($item->descuento_monto, 0, ',', '.') }}</div>
                                     @else
                                         <span class="text-muted">-</span>

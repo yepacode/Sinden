@@ -86,21 +86,28 @@ $(function() {
         autoExpandCantidad(this);
     });
 
-    // Forzar enteros en descuento (no decimales, rango 0-100)
+    // Descuento de items: PERMITIR decimales (punto o coma) en el porcentaje, rango
+    // 0-100, maximo 2 decimales. Se normaliza a punto (igual que el display y la
+    // cantidad). El cliente pidio poder poner decimales (ej. 2,5%).
     $(document).on('input', '.item-descuento', function() {
-        var v = String(this.value || '').replace(/[.,].*$/, '').replace(/[^0-9]/g, '');
+        var v = String(this.value || '').replace(/,/g, '.').replace(/[^0-9.]/g, '');
+        var i = v.indexOf('.');
+        if (i !== -1) {
+            // Un solo separador decimal y maximo 2 decimales
+            var ent = v.slice(0, i).replace(/\./g, '');
+            var dec = v.slice(i + 1).replace(/\./g, '').slice(0, 2);
+            v = ent + '.' + dec;
+        }
         if (v !== this.value) this.value = v;
     });
     $(document).on('keydown', '.item-descuento', function(e) {
-        if (e.key === '.' || e.key === ',' || e.key === 'e' || e.key === 'E') {
+        // El punto/coma SI se permiten (decimal); solo bloquear notacion cientifica y signo
+        if (e.key === 'e' || e.key === 'E' || e.key === '+' || e.key === '-') {
             e.preventDefault();
         }
     });
     $(document).on('blur', '.item-descuento', function() {
-        var n = parseInt(this.value, 10);
-        if (isNaN(n) || n < 0) n = 0;
-        if (n > 100) n = 100;
-        this.value = n;
+        this.value = parseDescuento(this.value);
         autoExpandCantidad(this);
     });
 
@@ -197,6 +204,15 @@ function formatCOP(valor) {
 function parseCOP(str) {
     if (!str) return 0;
     return parseFloat(String(str).replace(/[$.]/g, '').replace(',', '.')) || 0;
+}
+
+// Convierte el texto del descuento (acepta punto o coma) a numero 0-100 con maximo
+// 2 decimales. Centraliza el clamp para calculo, guardado y precarga en edicion.
+function parseDescuento(str) {
+    var n = parseFloat(String(str == null ? '' : str).replace(',', '.'));
+    if (isNaN(n) || n < 0) n = 0;
+    if (n > 100) n = 100;
+    return Math.round(n * 100) / 100;
 }
 
 /**
@@ -433,7 +449,7 @@ function agregarFilaItem(opts) {
         + '<td><input type="number" class="form-control form-control-sm text-center item-cantidad cantidad-auto-expand" value="1" min="0.01" step="0.01" style="width:75px" onchange="calcularTotalFila(' + idx + ')" onkeyup="calcularTotalFila(' + idx + ')"></td>'
         + '<td><input type="text" inputmode="decimal" class="form-control form-control-sm text-end item-precio money-input" value="0" oninput="formatearMoneda(this);calcularTotalFila(' + idx + ')"></td>'
         + '<td class="text-center"><input type="checkbox" class="form-check-input item-iva-check" checked onchange="calcularTotalFila(' + idx + ')"></td>'
-        + '<td><input type="number" class="form-control form-control-sm text-center item-descuento cantidad-auto-expand" value="0" min="0" max="100" step="1" inputmode="numeric" style="width:75px" onchange="calcularTotalFila(' + idx + ')" onkeyup="calcularTotalFila(' + idx + ')"></td>'
+        + '<td><input type="text" inputmode="decimal" class="form-control form-control-sm text-center item-descuento cantidad-auto-expand" value="0" style="width:75px" onchange="calcularTotalFila(' + idx + ')" onkeyup="calcularTotalFila(' + idx + ')"></td>'
         + '<td class="text-end fw-semibold item-subtotal-display">$0</td>'
         + '<td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger border-0" onclick="eliminarFilaItem(' + idx + ')"><i class="bi bi-trash"></i></button></td>'
         + '</tr>';
@@ -581,7 +597,7 @@ function recalcularTotales() {
         var cantidad = parseFloat($(this).find('.item-cantidad').val()) || 0;
         var precio = parseCOP($(this).find('.item-precio').val());
         var iva = $(this).find('.item-iva-check').is(':checked') ? WIZARD_CONFIG.ivaDefecto : 0;
-        var descPct = Math.max(0, Math.min(100, parseFloat($(this).find('.item-descuento').val()) || 0));
+        var descPct = parseDescuento($(this).find('.item-descuento').val());
         // Peso colombiano sin centavos: redondear cada monto a pesos enteros
         var base = Math.round(cantidad * precio);
         var descMonto = Math.round(base * descPct / 100);
@@ -1396,7 +1412,7 @@ function recalcularSaldo() {
         var cantidad = parseFloat($(this).find('.item-cantidad').val()) || 0;
         var precio = parseCOP($(this).find('.item-precio').val());
         var iva = $(this).find('.item-iva-check').is(':checked') ? WIZARD_CONFIG.ivaDefecto : 0;
-        var descPct = Math.max(0, Math.min(100, parseFloat($(this).find('.item-descuento').val()) || 0));
+        var descPct = parseDescuento($(this).find('.item-descuento').val());
         // Peso colombiano sin centavos: redondear a pesos enteros
         var base = Math.round(cantidad * precio);
         var ivaVal = Math.round(base * (iva / 100));
@@ -1453,7 +1469,7 @@ function recopilarDatosFormulario() {
             cantidad: parseFloat($(this).find('.item-cantidad').val()) || 0,
             precio_unitario: parseCOP($(this).find('.item-precio').val()),
             porcentaje_iva: $(this).find('.item-iva-check').is(':checked') ? WIZARD_CONFIG.ivaDefecto : 0,
-            descuento_porcentaje: Math.max(0, Math.min(100, parseFloat($(this).find('.item-descuento').val()) || 0)),
+            descuento_porcentaje: parseDescuento($(this).find('.item-descuento').val()),
             categoria: $(this).find('.item-categoria').val() || 'servicio'
         });
     });
@@ -1714,7 +1730,7 @@ function validarSobrepagoWizard() {
         var cantidad = parseFloat($(this).find('.item-cantidad').val()) || 0;
         var precio = parseCOP($(this).find('.item-precio').val());
         var iva = $(this).find('.item-iva-check').is(':checked') ? WIZARD_CONFIG.ivaDefecto : 0;
-        var descPct = Math.max(0, Math.min(100, parseFloat($(this).find('.item-descuento').val()) || 0));
+        var descPct = parseDescuento($(this).find('.item-descuento').val());
         // Peso colombiano sin centavos: redondear igual que el display y el backend
         var base = Math.round(cantidad * precio);
         var ivaVal = Math.round(base * (iva / 100));

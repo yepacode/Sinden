@@ -123,7 +123,7 @@
                         <td class="text-center">{{ \App\Helpers\Format::cantidad($item->cantidad) }}</td>
                         <td class="text-end">${{ number_format($item->precio_unitario, 0, ',', '.') }}</td>
                         <td class="text-center">{{ number_format($item->porcentaje_iva, 0) }}%</td>
-                        <td class="text-center">{{ $item->descuento_porcentaje > 0 ? number_format($item->descuento_porcentaje, 2) . '%' : '-' }}</td>
+                        <td class="text-center">{{ $item->descuento_porcentaje > 0 ? \App\Helpers\Format::cantidad($item->descuento_porcentaje) . '%' : '-' }}</td>
                         <td class="text-end">${{ number_format($item->subtotal, 0, ',', '.') }}</td>
                         <td class="text-end fw-semibold">${{ number_format($item->total, 0, ',', '.') }}</td>
                     </tr>

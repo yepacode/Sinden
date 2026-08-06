@@ -52,7 +52,8 @@ function cargarItems() {
         $row.find('.item-cantidad').val(isNaN(_cantItem) ? 1 : _cantItem).each(function(){ autoExpandCantidad(this); });
         setValorMoneda($row.find('.item-precio'), item.precio_unitario || 0);
         $row.find('.item-iva-check').prop('checked', parseFloat(item.porcentaje_iva) > 0);
-        $row.find('.item-descuento').val(parseInt(item.descuento_porcentaje, 10) || 0).each(function(){ autoExpandCantidad(this); });
+        // Descuento con decimales: 2.50 -> 2.5, 5.00 -> 5 (no truncar con parseInt).
+        $row.find('.item-descuento').val(parseDescuento(item.descuento_porcentaje)).each(function(){ autoExpandCantidad(this); });
         $row.find('.item-categoria').val(item.categoria || 'servicio');
 
         if (item.catalogo_item_id) {

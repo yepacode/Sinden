@@ -58,7 +58,7 @@ class ReporteItemsExport implements FromCollection, WithHeadings, WithMapping, W
             self::CATEGORIAS[$item->categoria] ?? strtoupper($item->categoria),
             number_format($item->cantidad, 2),
             '$' . number_format($item->precio_unitario, 0, ',', '.'),
-            $item->descuento_porcentaje > 0 ? number_format($item->descuento_porcentaje, 2) . '%' : '-',
+            $item->descuento_porcentaje > 0 ? \App\Helpers\Format::cantidad($item->descuento_porcentaje) . '%' : '-',
             '$' . number_format($item->descuento_monto, 0, ',', '.'),
             '$' . number_format($item->subtotal, 0, ',', '.'),
             '$' . number_format($item->monto_iva, 0, ',', '.'),

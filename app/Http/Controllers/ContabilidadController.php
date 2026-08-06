@@ -859,7 +859,7 @@ class ContabilidadController extends Controller
                 })
                 ->addColumn('descuento_formatted', function ($item) {
                     if ($item->descuento_porcentaje > 0) {
-                        return '<span class="text-danger">' . number_format($item->descuento_porcentaje, 2) . '%</span>'
+                        return '<span class="text-danger">' . \App\Helpers\Format::cantidad($item->descuento_porcentaje) . '%</span>'
                             . '<div class="small text-muted">-$' . number_format($item->descuento_monto, 0, ',', '.') . '</div>';
                     }
                     return '<span class="text-muted">-</span>';
