@@ -113,14 +113,14 @@ class ContabilidadController extends Controller
                     return $o->cliente->nombre ?? '-';
                 })
                 ->addColumn('total_formatted', function ($o) {
-                    return '$' . number_format($o->total, 0, ',', '.');
+                    return '$' . number_format($o->total, 0, '.', ',');
                 })
                 ->addColumn('pagado_formatted', function ($o) {
-                    return '<span class="text-success">$' . number_format($o->total_pagado, 0, ',', '.') . '</span>';
+                    return '<span class="text-success">$' . number_format($o->total_pagado, 0, '.', ',') . '</span>';
                 })
                 ->addColumn('saldo_formatted', function ($o) {
                     $class = $o->saldo > 0 ? 'text-danger fw-bold' : 'text-success';
-                    return '<span class="' . $class . '" style="font-size:1rem">$' . number_format($o->saldo, 0, ',', '.') . '</span>';
+                    return '<span class="' . $class . '" style="font-size:1rem">$' . number_format($o->saldo, 0, '.', ',') . '</span>';
                 })
                 ->addColumn('porcentaje_pagado', function ($o) {
                     $pct = $o->total > 0 ? round(($o->total_pagado / $o->total) * 100) : 0;
@@ -148,7 +148,7 @@ class ContabilidadController extends Controller
                         . 'data-orden-id="' . $o->id . '" '
                         . 'data-orden-numero="' . ($o->numero_orden ?? 'ID:' . $o->id) . '" '
                         . 'data-orden-cliente="' . ($o->cliente->nombre ?? '-') . '" '
-                        . 'data-orden-saldo="' . number_format($o->saldo, 0, ',', '.') . '" '
+                        . 'data-orden-saldo="' . number_format($o->saldo, 0, '.', ',') . '" '
                         . 'data-orden-saldo-num="' . $disponible . '" '
                         . 'title="Agregar Pago" data-tooltip="Agregar Pago"><i class="bi bi-plus-circle"></i></button>';
                     $html .= '</div>';
@@ -249,7 +249,7 @@ class ContabilidadController extends Controller
                     return $p->orden->cliente->nombre ?? '-';
                 })
                 ->addColumn('monto_formatted', function ($p) {
-                    return '<span class="fw-bold" style="font-size:1rem">$' . number_format($p->monto, 0, ',', '.') . '</span>';
+                    return '<span class="fw-bold" style="font-size:1rem">$' . number_format($p->monto, 0, '.', ',') . '</span>';
                 })
                 ->addColumn('metodo_badge', function ($p) {
                     return $this->badgeMetodoPago($p->metodo_pago);
@@ -264,14 +264,14 @@ class ContabilidadController extends Controller
                     $html = '<div class="action-buttons justify-content-end">';
                     $html .= '<button type="button" class="action-btn edit btn-aprobar-pago" '
                         . 'data-pago-id="' . $p->id . '" '
-                        . 'data-pago-monto="' . number_format($p->monto, 0, ',', '.') . '" '
+                        . 'data-pago-monto="' . number_format($p->monto, 0, '.', ',') . '" '
                         . 'data-pago-metodo="' . e($etiquetaMetodo) . '" '
                         . 'data-orden-numero="' . ($p->orden->numero_orden ?? '-') . '" '
                         . 'title="Aprobar" data-tooltip="Aprobar" style="width:36px;height:36px">'
                         . '<i class="bi bi-check-lg"></i></button>';
                     $html .= '<button type="button" class="action-btn delete btn-rechazar-pago" '
                         . 'data-pago-id="' . $p->id . '" '
-                        . 'data-pago-monto="' . number_format($p->monto, 0, ',', '.') . '" '
+                        . 'data-pago-monto="' . number_format($p->monto, 0, '.', ',') . '" '
                         . 'data-orden-numero="' . ($p->orden->numero_orden ?? '-') . '" '
                         . 'title="Rechazar" data-tooltip="Rechazar" style="width:36px;height:36px">'
                         . '<i class="bi bi-x-lg"></i></button>';
@@ -323,8 +323,8 @@ class ContabilidadController extends Controller
         if ((float) $pago->monto > $disponible + 0.005) {
             return response()->json([
                 'success' => false,
-                'message' => 'No se puede aprobar: el monto del pago ($' . number_format($pago->monto, 0, ',', '.') .
-                             ') excede el saldo disponible de la orden ($' . number_format($disponible, 0, ',', '.') . '). Considere rechazarlo.',
+                'message' => 'No se puede aprobar: el monto del pago ($' . number_format($pago->monto, 0, '.', ',') .
+                             ') excede el saldo disponible de la orden ($' . number_format($disponible, 0, '.', ',') . '). Considere rechazarlo.',
             ], 422);
         }
 
@@ -338,7 +338,7 @@ class ContabilidadController extends Controller
 
         $this->registrarActualizacion(
             'pago.aprobado',
-            'Pago de $' . number_format($pago->monto, 0, ',', '.') . ' aprobado (Orden ' . ($pago->orden->numero_orden ?? 'ID:' . $pago->orden_id) . ')',
+            'Pago de $' . number_format($pago->monto, 0, '.', ',') . ' aprobado (Orden ' . ($pago->orden->numero_orden ?? 'ID:' . $pago->orden_id) . ')',
             $pago,
             $valoresOriginales,
             $pago->orden_id
@@ -352,8 +352,8 @@ class ContabilidadController extends Controller
             'success' => true,
             'message' => 'Pago aprobado exitosamente.',
             'orden' => [
-                'saldo' => '$' . number_format($ordenFresh->saldo, 0, ',', '.'),
-                'total_pagado' => '$' . number_format($ordenFresh->total_pagado, 0, ',', '.'),
+                'saldo' => '$' . number_format($ordenFresh->saldo, 0, '.', ','),
+                'total_pagado' => '$' . number_format($ordenFresh->total_pagado, 0, '.', ','),
                 'estado_pago' => $ordenFresh->estado_pago,
             ],
             'stats' => $this->statsPagosPendientes(),
@@ -367,7 +367,11 @@ class ContabilidadController extends Controller
     {
         $request->validate([
             'pago_ids' => 'required|array|min:1',
-            'pago_ids.*' => 'required|integer|exists:pagos,id',
+            // NO usar exists:pagos,id: es estricto y con un solo id "fantasma" (un pago
+            // que ya se aprobo/quito pero quedo en la seleccion del navegador) tumbaba
+            // TODO el lote con "pago_ids.0 es invalido". El controlador ya filtra abajo
+            // por aprobado=false + whereIn, asi que los ids invalidos se ignoran solos.
+            'pago_ids.*' => 'required|integer',
         ]);
 
         $pagos = Pago::with('orden')
@@ -392,8 +396,8 @@ class ContabilidadController extends Controller
             if (($aprobadosActuales + $sumaLote) > (float) $orden->total + 0.005) {
                 $disponible = max(0, (float) $orden->total - $aprobadosActuales);
                 $errores[] = 'Orden ' . ($orden->numero_orden ?? 'ID:' . $ordenId) .
-                             ': el lote suma $' . number_format($sumaLote, 0, ',', '.') .
-                             ' pero solo hay $' . number_format($disponible, 0, ',', '.') . ' disponibles.';
+                             ': el lote suma $' . number_format($sumaLote, 0, '.', ',') .
+                             ' pero solo hay $' . number_format($disponible, 0, '.', ',') . ' disponibles.';
             }
         }
         if (!empty($errores)) {
@@ -422,7 +426,7 @@ class ContabilidadController extends Controller
 
                 $this->registrarActualizacion(
                     'pago.aprobado',
-                    'Pago de $' . number_format($pago->monto, 0, ',', '.') . ' aprobado (Orden ' . ($pago->orden->numero_orden ?? 'ID:' . $pago->orden_id) . ')',
+                    'Pago de $' . number_format($pago->monto, 0, '.', ',') . ' aprobado (Orden ' . ($pago->orden->numero_orden ?? 'ID:' . $pago->orden_id) . ')',
                     $pago,
                     $valoresOriginales,
                     $pago->orden_id,
@@ -444,9 +448,9 @@ class ContabilidadController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => $aprobados . ' pago(s) aprobado(s) por un total de $' . number_format($montoTotal, 0, ',', '.'),
+                'message' => $aprobados . ' pago(s) aprobado(s) por un total de $' . number_format($montoTotal, 0, '.', ','),
                 'aprobados' => $aprobados,
-                'monto_total' => '$' . number_format($montoTotal, 0, ',', '.'),
+                'monto_total' => '$' . number_format($montoTotal, 0, '.', ','),
                 'stats' => $this->statsPagosPendientes(),
             ]);
         } catch (\Exception $e) {
@@ -478,7 +482,7 @@ class ContabilidadController extends Controller
         if ((float) $request->monto > $disponible + 0.005) {
             return response()->json([
                 'success' => false,
-                'message' => 'El monto excede el saldo disponible. Maximo: $' . number_format($disponible, 0, ',', '.'),
+                'message' => 'El monto excede el saldo disponible. Maximo: $' . number_format($disponible, 0, '.', ','),
             ], 422);
         }
 
@@ -498,7 +502,7 @@ class ContabilidadController extends Controller
 
         $this->registrarCreacion(
             'pago.registrado',
-            'Pago de $' . number_format($request->monto, 0, ',', '.') . ' registrado y aprobado en orden ' . ($orden->numero_orden ?? 'ID:' . $orden->id),
+            'Pago de $' . number_format($request->monto, 0, '.', ',') . ' registrado y aprobado en orden ' . ($orden->numero_orden ?? 'ID:' . $orden->id),
             $pago,
             $orden->id
         );
@@ -510,12 +514,12 @@ class ContabilidadController extends Controller
             'message' => 'Pago registrado y aprobado.',
             'pago' => [
                 'id' => $pago->id,
-                'monto' => '$' . number_format($pago->monto, 0, ',', '.'),
+                'monto' => '$' . number_format($pago->monto, 0, '.', ','),
                 'metodo_pago' => $pago->metodo_pago,
                 'fecha' => $pago->created_at->format('d/m/Y H:i'),
             ],
-            'nuevo_saldo' => '$' . number_format($ordenFresh->saldo, 0, ',', '.'),
-            'nuevo_total_pagado' => '$' . number_format($ordenFresh->total_pagado, 0, ',', '.'),
+            'nuevo_saldo' => '$' . number_format($ordenFresh->saldo, 0, '.', ','),
+            'nuevo_total_pagado' => '$' . number_format($ordenFresh->total_pagado, 0, '.', ','),
             'estado_pago' => $ordenFresh->estado_pago,
         ]);
     }
@@ -541,7 +545,7 @@ class ContabilidadController extends Controller
 
         $this->registrarEliminacion(
             'pago.rechazado',
-            'Pago de $' . number_format($monto, 0, ',', '.') . ' rechazado (Orden ' . $ordenNumero . ')',
+            'Pago de $' . number_format($monto, 0, '.', ',') . ' rechazado (Orden ' . $ordenNumero . ')',
             $pago,
             $ordenId,
             ['motivo_rechazo' => $request->input('motivo_rechazo')]
@@ -610,13 +614,13 @@ class ContabilidadController extends Controller
                 })
                 ->addColumn('cliente_nombre', fn($o) => $o->cliente->nombre ?? '-')
                 ->addColumn('fecha_creacion', fn($o) => $o->created_at->format('d/m/Y'))
-                ->addColumn('total_formatted', fn($o) => '$' . number_format($o->total, 0, ',', '.'))
+                ->addColumn('total_formatted', fn($o) => '$' . number_format($o->total, 0, '.', ','))
                 ->addColumn('pagado_formatted', function ($o) {
-                    return '<span class="text-success">$' . number_format($o->total_pagado, 0, ',', '.') . '</span>';
+                    return '<span class="text-success">$' . number_format($o->total_pagado, 0, '.', ',') . '</span>';
                 })
                 ->addColumn('saldo_formatted', function ($o) {
                     if ($o->saldo > 0) {
-                        return '<span class="text-danger fw-bold">$' . number_format($o->saldo, 0, ',', '.') . '</span>';
+                        return '<span class="text-danger fw-bold">$' . number_format($o->saldo, 0, '.', ',') . '</span>';
                     }
                     return '<span class="text-success">$0</span>';
                 })
@@ -732,7 +736,7 @@ class ContabilidadController extends Controller
                 return [
                     'id' => $p->id,
                     'fecha' => $p->created_at->format('d/m/Y H:i'),
-                    'monto' => '$' . number_format($p->monto, 0, ',', '.'),
+                    'monto' => '$' . number_format($p->monto, 0, '.', ','),
                     'monto_raw' => $p->monto,
                     'metodo_pago' => ucfirst($p->metodo_pago),
                     'metodo_badge' => $this->badgeMetodoPago($p->metodo_pago),
@@ -753,9 +757,9 @@ class ContabilidadController extends Controller
             'orden' => [
                 'numero' => $orden->numero_orden ?? 'ID:' . $orden->id,
                 'cliente' => $orden->cliente->nombre ?? '-',
-                'total' => '$' . number_format($orden->total, 0, ',', '.'),
-                'total_pagado' => '$' . number_format($orden->total_pagado, 0, ',', '.'),
-                'saldo' => '$' . number_format(abs($orden->saldo), 0, ',', '.'),
+                'total' => '$' . number_format($orden->total, 0, '.', ','),
+                'total_pagado' => '$' . number_format($orden->total_pagado, 0, '.', ','),
+                'saldo' => '$' . number_format(abs($orden->saldo), 0, '.', ','),
                 'saldo_raw' => (float) $orden->saldo,
                 'estado_pago' => $orden->estado_pago,
             ],
@@ -835,10 +839,10 @@ class ContabilidadController extends Controller
             return DataTables::of($query)
                 ->with([
                     'totales' => [
-                        'subtotal' => '$' . number_format($totales->sum_subtotal ?? 0, 0, ',', '.'),
-                        'iva' => '$' . number_format($totales->sum_iva ?? 0, 0, ',', '.'),
-                        'total' => '$' . number_format($totales->sum_total ?? 0, 0, ',', '.'),
-                        'descuento' => '$' . number_format($totales->sum_descuento ?? 0, 0, ',', '.'),
+                        'subtotal' => '$' . number_format($totales->sum_subtotal ?? 0, 0, '.', ','),
+                        'iva' => '$' . number_format($totales->sum_iva ?? 0, 0, '.', ','),
+                        'total' => '$' . number_format($totales->sum_total ?? 0, 0, '.', ','),
+                        'descuento' => '$' . number_format($totales->sum_descuento ?? 0, 0, '.', ','),
                     ]
                 ])
                 ->addColumn('numero_orden_link', function ($item) {
@@ -855,23 +859,23 @@ class ContabilidadController extends Controller
                     return number_format($item->cantidad, 2);
                 })
                 ->addColumn('precio_formatted', function ($item) {
-                    return '$' . number_format($item->precio_unitario, 0, ',', '.');
+                    return '$' . number_format($item->precio_unitario, 0, '.', ',');
                 })
                 ->addColumn('descuento_formatted', function ($item) {
                     if ($item->descuento_porcentaje > 0) {
                         return '<span class="text-danger">' . \App\Helpers\Format::cantidad($item->descuento_porcentaje) . '%</span>'
-                            . '<div class="small text-muted">-$' . number_format($item->descuento_monto, 0, ',', '.') . '</div>';
+                            . '<div class="small text-muted">-$' . number_format($item->descuento_monto, 0, '.', ',') . '</div>';
                     }
                     return '<span class="text-muted">-</span>';
                 })
                 ->addColumn('subtotal_formatted', function ($item) {
-                    return '$' . number_format($item->subtotal, 0, ',', '.');
+                    return '$' . number_format($item->subtotal, 0, '.', ',');
                 })
                 ->addColumn('iva_formatted', function ($item) {
-                    return '$' . number_format($item->monto_iva, 0, ',', '.');
+                    return '$' . number_format($item->monto_iva, 0, '.', ',');
                 })
                 ->addColumn('total_formatted', function ($item) {
-                    return '<span class="fw-bold">$' . number_format($item->total, 0, ',', '.') . '</span>';
+                    return '<span class="fw-bold">$' . number_format($item->total, 0, '.', ',') . '</span>';
                 })
                 ->rawColumns(['numero_orden_link', 'categoria_badge', 'total_formatted', 'descuento_formatted'])
                 ->make(true);
@@ -945,7 +949,7 @@ class ContabilidadController extends Controller
     {
         return [
             'por_aprobar' => Pago::where('aprobado', false)->count(),
-            'monto_pendiente' => '$' . number_format(Pago::where('aprobado', false)->sum('monto'), 0, ',', '.'),
+            'monto_pendiente' => '$' . number_format(Pago::where('aprobado', false)->sum('monto'), 0, '.', ','),
             'aprobados_hoy' => Pago::where('aprobado', true)->whereDate('updated_at', today())->count(),
         ];
     }
@@ -990,8 +994,11 @@ class ContabilidadController extends Controller
     {
         $mapa = TipoPago::mapaBadges();
         $sec = TipoPago::paletaColores()['secondary'];
-        $cfg = $mapa[$metodo] ?? ['icono' => 'bi-three-dots', 'nombre' => ucfirst($metodo), 'etiqueta' => ucfirst($metodo), 'hex' => $sec['hex'], 'bg' => $sec['bg']];
+        $cfg = $mapa[$metodo] ?? ['icono' => 'bi-three-dots', 'nombre' => ucfirst($metodo), 'etiqueta' => ucfirst($metodo), 'hex' => $sec['hex'], 'hex_dark' => $sec['hex_dark'], 'bg' => $sec['bg']];
         $texto = $cfg['etiqueta'] ?? $cfg['nombre'];
-        return '<span class="badge border" style="background-color: ' . $cfg['bg'] . '; color: ' . $cfg['hex'] . '; border-color: ' . $cfg['hex'] . '33 !important;"><i class="bi ' . $cfg['icono'] . ' me-1"></i>' . e($texto) . '</span>';
+        // --m-fg-dark: color de texto claro para modo oscuro (lo aplica gva-global.css
+        // con [data-theme="dark"] .badge-metodo). En claro se usa el 'color' inline.
+        $hexDark = $cfg['hex_dark'] ?? $cfg['hex'];
+        return '<span class="badge border badge-metodo" style="--m-fg-dark: ' . $hexDark . '; background-color: ' . $cfg['bg'] . '; color: ' . $cfg['hex'] . '; border-color: ' . $cfg['hex'] . '33 !important;"><i class="bi ' . $cfg['icono'] . ' me-1"></i>' . e($texto) . '</span>';
     }
 }

@@ -14,9 +14,9 @@
     {{-- Stat Cards --}}
     <div class="summary-cards">
         <x-sinden.stat-card icon="bi bi-receipt-cutoff" :value="$totalOrdenes" title="Ordenes con Saldo" color="primary" />
-        <x-sinden.stat-card icon="bi bi-currency-dollar" :value="'$' . number_format($totalPendiente, 0, ',', '.')" title="Cartera Total" color="danger" />
+        <x-sinden.stat-card icon="bi bi-currency-dollar" :value="'$' . number_format($totalPendiente, 0, '.', ',')" title="Cartera Total" color="danger" />
         <x-sinden.stat-card icon="bi bi-hourglass-split" :value="$abonosSinAprobar" title="Abonos sin Aprobar" color="warning" />
-        <x-sinden.stat-card icon="bi bi-cash-stack" :value="'$' . number_format($recaudadoHoy, 0, ',', '.')" title="Recaudado Hoy" color="success" />
+        <x-sinden.stat-card icon="bi bi-cash-stack" :value="'$' . number_format($recaudadoHoy, 0, '.', ',')" title="Recaudado Hoy" color="success" />
     </div>
 
     {{-- Filtros --}}

@@ -582,6 +582,14 @@ select.form-control {
     color: inherit !important;
 }
 
+/* Badge de METODO de pago (modulo Pagos/Contabilidad): lleva color inline por metodo
+   (fondo = tinte translucido, texto = hex oscuro). En modo OSCURO ese texto oscuro sobre
+   el tinte oscuro quedaba invisible; se reemplaza por la variante clara --m-fg-dark que
+   el propio badge define inline. El fondo tinte funciona en ambos temas. */
+[data-theme="dark"] .badge.badge-metodo {
+    color: var(--m-fg-dark) !important;
+}
+
 /* ==============================================
    Alerts
    ============================================== */

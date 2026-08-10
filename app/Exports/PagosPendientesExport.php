@@ -48,7 +48,7 @@ class PagosPendientesExport implements FromCollection, WithHeadings, WithMapping
             $p->created_at ? $p->created_at->format('d/m/Y H:i') : '-',
             $p->orden->numero_orden ?? '-',
             $p->orden->cliente->nombre ?? '-',
-            number_format($p->monto, 0, ',', '.'),
+            number_format($p->monto, 0, '.', ','),
             $metodo,
             $p->referencia_pago ?? '-',
             $p->registradoPorUsuario->name ?? '-',

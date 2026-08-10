@@ -20,10 +20,10 @@
         </a>
         @endif
         @if(\App\Models\ConfiguracionSistema::metricaVisible('contabilidad', 'total_pendiente'))
-        <x-sinden.stat-card icon="bi bi-currency-dollar" :value="'$' . number_format($totalPendiente, 0, ',', '.')" title="Total Pendiente" color="info" />
+        <x-sinden.stat-card icon="bi bi-currency-dollar" :value="'$' . number_format($totalPendiente, 0, '.', ',')" title="Total Pendiente" color="info" />
         @endif
         @if(\App\Models\ConfiguracionSistema::metricaVisible('contabilidad', 'recaudado_hoy'))
-        <x-sinden.stat-card icon="bi bi-cash-stack" :value="'$' . number_format($recaudadoHoy, 0, ',', '.')" title="Recaudado Hoy" color="success" />
+        <x-sinden.stat-card icon="bi bi-cash-stack" :value="'$' . number_format($recaudadoHoy, 0, '.', ',')" title="Recaudado Hoy" color="success" />
         @endif
     </div>
 
@@ -47,7 +47,7 @@
                             <div class="d-flex justify-content-between align-items-center py-2 {{ !$loop->last ? 'border-bottom' : '' }}">
                                 <div class="d-flex align-items-center gap-3">
                                     <span class="fw-bold text-success" style="font-size:1rem; min-width:100px">
-                                        ${{ number_format($pago->monto, 0, ',', '.') }}
+                                        ${{ number_format($pago->monto, 0, '.', ',') }}
                                     </span>
                                     @php
                                         $_sec = \App\Models\TipoPago::paletaColores()['secondary'];
@@ -105,7 +105,7 @@
                                 <i class="bi {{ $cfg['icono'] }} me-2" style="color: {{ $cfg['hex'] }};"></i>
                                 <span>{{ $cfg['etiqueta'] ?? $cfg['nombre'] }}</span>
                             </div>
-                            <span class="fw-semibold">${{ number_format($total, 0, ',', '.') }}</span>
+                            <span class="fw-semibold">${{ number_format($total, 0, '.', ',') }}</span>
                         </div>
                     @empty
                         <p class="text-muted small mb-0 text-center py-2">Sin recaudo hoy</p>
@@ -115,7 +115,7 @@
                         <div class="border-top mt-2 pt-2">
                             <div class="d-flex justify-content-between">
                                 <span class="fw-bold">Total</span>
-                                <span class="fw-bold text-success">${{ number_format($totalMetodos, 0, ',', '.') }}</span>
+                                <span class="fw-bold text-success">${{ number_format($totalMetodos, 0, '.', ',') }}</span>
                             </div>
                         </div>
                     @endif
@@ -124,7 +124,7 @@
                         <div class="mt-3 pt-2 border-top">
                             <div class="d-flex justify-content-between small">
                                 <span class="text-muted">Recaudo esta semana</span>
-                                <span class="fw-semibold">${{ number_format($recaudadoSemana, 0, ',', '.') }}</span>
+                                <span class="fw-semibold">${{ number_format($recaudadoSemana, 0, '.', ',') }}</span>
                             </div>
                         </div>
                     @endif
@@ -147,7 +147,7 @@
                     </div>
                     <div class="d-flex justify-content-between align-items-center py-2">
                         <span>Monto cobrable</span>
-                        <span class="fw-bold text-danger">${{ number_format($garantiasCobrables['monto'], 0, ',', '.') }}</span>
+                        <span class="fw-bold text-danger">${{ number_format($garantiasCobrables['monto'], 0, '.', ',') }}</span>
                     </div>
                     <a href="{{ route('recepcion.garantias.index') }}" class="btn btn-outline-danger btn-sm w-100 mt-2">
                         <i class="bi bi-arrow-right me-1"></i>Ver Garantias

@@ -13,13 +13,13 @@
 
     {{-- Stat Cards --}}
     <div class="summary-cards">
-        <x-sinden.stat-card icon="bi bi-gear" :value="'$' . number_format($totalServicios, 0, ',', '.')" title="Total Servicios" color="info" />
-        <x-sinden.stat-card icon="bi bi-box" :value="'$' . number_format($totalMateriales, 0, ',', '.')" title="Total Materiales" color="warning" />
-        <x-sinden.stat-card icon="bi bi-bag-check" :value="'$' . number_format($totalProductos, 0, ',', '.')" title="Total Prod. Terminados" color="success" />
-        <x-sinden.stat-card icon="bi bi-cash" :value="'$' . number_format($totalSinIva, 0, ',', '.')" title="Total Sin IVA" color="secondary" />
-        <x-sinden.stat-card icon="bi bi-receipt" :value="'$' . number_format($totalIva, 0, ',', '.')" title="Total IVA" color="dark" />
-        <x-sinden.stat-card icon="bi bi-percent" :value="'$' . number_format($totalDescuentos, 0, ',', '.')" title="Total Descuentos" color="danger" />
-        <x-sinden.stat-card icon="bi bi-cash-stack" :value="'$' . number_format($granTotal, 0, ',', '.')" title="Gran Total" color="primary" />
+        <x-sinden.stat-card icon="bi bi-gear" :value="'$' . number_format($totalServicios, 0, '.', ',')" title="Total Servicios" color="info" />
+        <x-sinden.stat-card icon="bi bi-box" :value="'$' . number_format($totalMateriales, 0, '.', ',')" title="Total Materiales" color="warning" />
+        <x-sinden.stat-card icon="bi bi-bag-check" :value="'$' . number_format($totalProductos, 0, '.', ',')" title="Total Prod. Terminados" color="success" />
+        <x-sinden.stat-card icon="bi bi-cash" :value="'$' . number_format($totalSinIva, 0, '.', ',')" title="Total Sin IVA" color="secondary" />
+        <x-sinden.stat-card icon="bi bi-receipt" :value="'$' . number_format($totalIva, 0, '.', ',')" title="Total IVA" color="dark" />
+        <x-sinden.stat-card icon="bi bi-percent" :value="'$' . number_format($totalDescuentos, 0, '.', ',')" title="Total Descuentos" color="danger" />
+        <x-sinden.stat-card icon="bi bi-cash-stack" :value="'$' . number_format($granTotal, 0, '.', ',')" title="Gran Total" color="primary" />
     </div>
 
     {{-- Filtros --}}

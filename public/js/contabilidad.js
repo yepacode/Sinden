@@ -71,7 +71,7 @@ function initOrdenesPendientesTable(config) {
         var saldoMax = parseFloat(btn.data('orden-saldo-num')) || 0;
         $('#pagoOrdenId').val(btn.data('orden-id')).data('saldo-max', saldoMax);
         $('#pagoMonto').attr('max', saldoMax).data('saldo-max', saldoMax);
-        $('#pagoMontoMax').text('$' + saldoMax.toLocaleString('es-CO'));
+        $('#pagoMontoMax').text('$' + saldoMax.toLocaleString('en-US'));
 
         // Build info HTML dynamically (Tailwind CDN strips empty divs)
         $('#infoPagoOrdenContainer').html(
@@ -79,7 +79,7 @@ function initOrdenesPendientesTable(config) {
             '<div class="fw-semibold">Orden ' + btn.data('orden-numero') + '</div>' +
             '<div class="small text-muted">' + btn.data('orden-cliente') + '</div>' +
             '<div class="mt-1">Saldo: <span class="fw-bold text-danger">$' + btn.data('orden-saldo') + '</span></div>' +
-            '<div class="small text-muted mt-1">Maximo permitido: <span class="fw-semibold">$' + saldoMax.toLocaleString('es-CO') + '</span></div>' +
+            '<div class="small text-muted mt-1">Maximo permitido: <span class="fw-semibold">$' + saldoMax.toLocaleString('en-US') + '</span></div>' +
             '</div>'
         );
 
@@ -109,7 +109,7 @@ function initOrdenesPendientesTable(config) {
             Swal.fire({
                 icon: 'warning',
                 title: 'Monto excede el saldo',
-                text: 'El maximo permitido es $' + saldoMax.toLocaleString('es-CO') + '.',
+                text: 'El maximo permitido es $' + saldoMax.toLocaleString('en-US') + '.',
             });
             return;
         }
@@ -644,7 +644,8 @@ function recalcularTotalesHistorial() {
 }
 
 function formatNumber(num) {
-    return Math.round(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    // Contabilidad usa formato US: coma para miles (el resto de la app usa punto).
+    return Math.round(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
 
 function actualizarExportUrlHistorial(baseUrl) {

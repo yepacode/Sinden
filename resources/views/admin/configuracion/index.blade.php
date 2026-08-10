@@ -158,7 +158,7 @@
                                     <td><code>{{ $tp->codigo }}</code></td>
                                     <td>{{ $tp->nombre }}</td>
                                     <td class="text-center">
-                                        <span class="badge" style="background-color: {{ $_pp['bg'] }}; color: {{ $_pp['hex'] }}; border: 1px solid {{ $_pp['hex'] }}33;">
+                                        <span class="badge badge-metodo" style="--m-fg-dark: {{ $_pp['hex_dark'] ?? $_pp['hex'] }}; background-color: {{ $_pp['bg'] }}; color: {{ $_pp['hex'] }}; border: 1px solid {{ $_pp['hex'] }}33;">
                                             <i class="bi {{ $tp->icono }} me-1"></i>{{ $tp->codigo }} - {{ $tp->nombre }}
                                         </span>
                                     </td>
@@ -250,7 +250,7 @@
                                         <div class="col-md-6">
                                             <label class="form-label fw-medium">Vista previa</label>
                                             <div>
-                                                <span class="badge" :style="estiloPreviewTipo(tipoForm.color)" style="font-size:1rem;">
+                                                <span class="badge badge-metodo" :style="estiloPreviewTipo(tipoForm.color)" style="font-size:1rem;">
                                                     <i class="bi me-1" :class="tipoForm.icono"></i>
                                                     <span x-text="(tipoForm.codigo || 'tipo') + ' - ' + (tipoForm.nombre || 'numero')"></span>
                                                 </span>
@@ -522,18 +522,18 @@ function configuracionApp() {
         // no expone clases -subtle, p.ej. purple, o cuando el navegador antiguo
         // no las renderiza bien).
         coloresPalette: {
-            success:   { hex: '#198754', bg: 'rgba(25,135,84,.15)' },
-            primary:   { hex: '#0d6efd', bg: 'rgba(13,110,253,.15)' },
-            info:      { hex: '#0dcaf0', bg: 'rgba(13,202,240,.18)' },
-            warning:   { hex: '#b8860b', bg: 'rgba(255,193,7,.22)' },
-            danger:    { hex: '#dc3545', bg: 'rgba(220,53,69,.15)' },
-            secondary: { hex: '#6c757d', bg: 'rgba(108,117,125,.18)' },
-            purple:    { hex: '#6f42c1', bg: 'rgba(111,66,193,.15)' },
-            dark:      { hex: '#212529', bg: 'rgba(33,37,41,.18)' },
+            success:   { hex: '#198754', hex_dark: '#75b798', bg: 'rgba(25,135,84,.15)' },
+            primary:   { hex: '#0d6efd', hex_dark: '#6ea8fe', bg: 'rgba(13,110,253,.15)' },
+            info:      { hex: '#0dcaf0', hex_dark: '#6edff6', bg: 'rgba(13,202,240,.18)' },
+            warning:   { hex: '#b8860b', hex_dark: '#ffda6a', bg: 'rgba(255,193,7,.22)' },
+            danger:    { hex: '#dc3545', hex_dark: '#ea868f', bg: 'rgba(220,53,69,.15)' },
+            secondary: { hex: '#6c757d', hex_dark: '#a7acb1', bg: 'rgba(108,117,125,.18)' },
+            purple:    { hex: '#6f42c1', hex_dark: '#c29ffa', bg: 'rgba(111,66,193,.15)' },
+            dark:      { hex: '#212529', hex_dark: '#adb5bd', bg: 'rgba(33,37,41,.18)' },
         },
         estiloPreviewTipo(color) {
             var p = this.coloresPalette[color] || this.coloresPalette.secondary;
-            return 'background-color:' + p.bg + '; color:' + p.hex + '; border:1px solid ' + p.hex + '33;';
+            return '--m-fg-dark:' + (p.hex_dark || p.hex) + '; background-color:' + p.bg + '; color:' + p.hex + '; border:1px solid ' + p.hex + '33;';
         },
 
         // ─── Tags: Materiales ────────────────────────

@@ -22,7 +22,7 @@
             <x-sinden.stat-card icon="bi bi-hourglass-split" :value="$porAprobar" title="Por Aprobar" color="warning" />
         </div>
         <div id="statMontoPendiente">
-            <x-sinden.stat-card icon="bi bi-currency-dollar" :value="'$' . number_format($montoPendiente, 0, ',', '.')" title="Monto Total Pendiente" color="info" />
+            <x-sinden.stat-card icon="bi bi-currency-dollar" :value="'$' . number_format($montoPendiente, 0, '.', ',')" title="Monto Total Pendiente" color="info" />
         </div>
         <div id="statAprobadosHoy">
             <x-sinden.stat-card icon="bi bi-check2-all" :value="$aprobadosHoy" title="Aprobados Hoy" color="success" />

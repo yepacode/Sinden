@@ -34,8 +34,8 @@
     <div class="summary-cards">
         <x-sinden.stat-card icon="bi bi-journal-text" :value="$totalOrdenes" title="Total Ordenes" color="primary" />
         <x-sinden.stat-card icon="bi bi-check-circle" :value="$ordenesPagadas" title="Ordenes Pagadas" color="success" />
-        <x-sinden.stat-card icon="bi bi-cash-stack" :value="'$' . number_format($totalRecaudado, 0, ',', '.')" title="Total Recaudado" color="info" />
-        <x-sinden.stat-card icon="bi bi-exclamation-triangle" :value="'$' . number_format($totalPorCobrar, 0, ',', '.')" title="Total por Cobrar" color="danger" />
+        <x-sinden.stat-card icon="bi bi-cash-stack" :value="'$' . number_format($totalRecaudado, 0, '.', ',')" title="Total Recaudado" color="info" />
+        <x-sinden.stat-card icon="bi bi-exclamation-triangle" :value="'$' . number_format($totalPorCobrar, 0, '.', ',')" title="Total por Cobrar" color="danger" />
     </div>
 
     {{-- Filtros --}}
