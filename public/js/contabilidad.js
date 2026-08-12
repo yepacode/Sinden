@@ -428,7 +428,6 @@ function initHistorialFinancieroTable(config) {
             }
         },
         columns: [
-            { data: 'checkbox', name: 'checkbox', orderable: false, searchable: false, className: 'text-center', width: '40px' },
             { data: 'numero_orden', name: 'numero_orden', width: '80px' },
             { data: 'cliente_nombre', name: 'cliente.nombre' },
             { data: 'fecha_creacion', name: 'created_at', width: '95px' },
@@ -444,7 +443,7 @@ function initHistorialFinancieroTable(config) {
         buttons: [
             { extend: 'colvis', text: '<i class="bi bi-layout-three-columns"></i> Columnas', className: 'btn btn-sm btn-outline-secondary' }
         ],
-        order: [[3, 'desc']],
+        order: [[2, 'desc']],
         pageLength: 15,
         lengthMenu: [[10, 15, 25, 50], [10, 15, 25, 50]],
         language: {
@@ -453,24 +452,28 @@ function initHistorialFinancieroTable(config) {
         drawCallback: function(settings) {
             var total = settings._iRecordsTotal || 0;
             $('#totalRegistros').text(total + ' registro' + (total !== 1 ? 's' : ''));
-            $('#checkAll').prop('checked', true);
-            recalcularTotalesHistorial();
+            // Total del FILTRO COMPLETO: lo calcula el servidor sobre todas las ordenes
+            // del filtro (no solo la pagina visible), asi nunca se cuelga y siempre es el
+            // total real del dia/filtro aunque haya cientos de ordenes.
+            var json = settings.json;
+            var t = json && json.totalesFiltro;
+            if (t) {
+                $('#hfCount').text(t.count);
+                $('#hfTotal').text(t.total);
+                $('#hfPagado').text(t.pagado);
+                $('#hfSaldo').text(t.saldo);
+                $('#hfSubtotal').text(t.subtotal);
+                $('#hfIva').text(t.iva);
+            }
+            // Tarjetas de resumen ACOTADAS al filtro (ya no son totales globales sin fin)
+            if (json && json.cards) {
+                $('#cardTotalOrdenes').text(json.cards.totalOrdenes);
+                $('#cardOrdenesPagadas').text(json.cards.ordenesPagadas);
+                $('#cardTotalRecaudado').text(json.cards.totalRecaudado);
+                $('#cardTotalPorCobrar').text(json.cards.totalPorCobrar);
+            }
+            if (json && json.rango) { $('#rangoResumen').text(json.rango); }
         }
-    });
-
-    // Checkbox select all
-    $('#checkAll').on('change', function() {
-        var checked = $(this).is(':checked');
-        $('#historialFinancieroTable tbody .fila-check').prop('checked', checked);
-        recalcularTotalesHistorial();
-    });
-
-    // Checkbox individual
-    $(document).on('change', '#historialFinancieroTable tbody .fila-check', function() {
-        var allChecked = $('#historialFinancieroTable tbody .fila-check').length ===
-            $('#historialFinancieroTable tbody .fila-check:checked').length;
-        $('#checkAll').prop('checked', allChecked);
-        recalcularTotalesHistorial();
     });
 
     // Filtros
@@ -498,6 +501,13 @@ function initHistorialFinancieroTable(config) {
     if (config.exportUrl) {
         actualizarExportUrlHistorial(config.exportUrl);
     }
+
+    // Al hacer clic en Excel, refrescar la URL con los filtros actuales (por si cambiaron
+    // un filtro y no dieron "Filtrar"). El href se actualiza antes de que el navegador
+    // siga el enlace, asi el Excel siempre respeta los filtros vigentes.
+    $('#btnExportar').on('click', function() {
+        actualizarExportUrlHistorial(config.exportUrl);
+    });
 
     // Ver pagos de una orden (modal)
     $(document).on('click', '.btn-ver-pagos', function() {
@@ -627,22 +637,6 @@ function initHistorialFinancieroTable(config) {
     });
 }
 
-function recalcularTotalesHistorial() {
-    var total = 0, subtotal = 0, iva = 0, pagado = 0, saldo = 0;
-    $('#historialFinancieroTable tbody .fila-check:checked').each(function() {
-        total    += parseFloat($(this).data('total'))    || 0;
-        subtotal += parseFloat($(this).data('subtotal')) || 0;
-        iva      += parseFloat($(this).data('iva'))      || 0;
-        pagado   += parseFloat($(this).data('pagado'))   || 0;
-        saldo    += parseFloat($(this).data('saldo'))    || 0;
-    });
-    $('#sumaSubtotal').text('$' + formatNumber(subtotal));
-    $('#sumaIva').text('$' + formatNumber(iva));
-    $('#sumaTotal').text('$' + formatNumber(total));
-    $('#sumaPagado').html('<span class="text-success">$' + formatNumber(pagado) + '</span>');
-    $('#sumaSaldo').html('<span class="text-danger">$' + formatNumber(saldo) + '</span>');
-}
-
 function formatNumber(num) {
     // Contabilidad usa formato US: coma para miles (el resto de la app usa punto).
     return Math.round(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -721,6 +715,17 @@ function initReporteItemsTable(config) {
                     $('#sumaDescuento').text('-' + json.totales.descuento);
                 }
             }
+            // Tarjetas de resumen ACOTADAS al filtro (ya no son totales globales sin fin)
+            if (json && json.cards) {
+                $('#cardServicios').text(json.cards.servicios);
+                $('#cardMateriales').text(json.cards.materiales);
+                $('#cardProductos').text(json.cards.productos);
+                $('#cardSinIva').text(json.cards.sinIva);
+                $('#cardIva').text(json.cards.iva);
+                $('#cardDescuentos').text(json.cards.descuentos);
+                $('#cardGranTotal').text(json.cards.granTotal);
+            }
+            if (json && json.rango) { $('#rangoResumen').text(json.rango); }
         }
     });
 
@@ -747,6 +752,14 @@ function initReporteItemsTable(config) {
             reporteItemsTable.draw();
             actualizarExportUrl(config.exportUrl);
         }
+    });
+
+    // URL inicial del export + refresco al hacer clic en Excel (igual que Historial
+    // Financiero): asi el Excel siempre respeta los filtros vigentes aunque el usuario
+    // cambie un filtro y no de "Filtrar".
+    actualizarExportUrl(config.exportUrl);
+    $('#btnExportar').on('click', function() {
+        actualizarExportUrl(config.exportUrl);
     });
 }
 

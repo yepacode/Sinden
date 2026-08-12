@@ -30,12 +30,21 @@
         </x-slot>
     </x-sinden.page-header>
 
-    {{-- Stat Cards --}}
-    <div class="summary-cards">
-        <x-sinden.stat-card icon="bi bi-journal-text" :value="$totalOrdenes" title="Total Ordenes" color="primary" />
-        <x-sinden.stat-card icon="bi bi-check-circle" :value="$ordenesPagadas" title="Ordenes Pagadas" color="success" />
-        <x-sinden.stat-card icon="bi bi-cash-stack" :value="'$' . number_format($totalRecaudado, 0, '.', ',')" title="Total Recaudado" color="info" />
-        <x-sinden.stat-card icon="bi bi-exclamation-triangle" :value="'$' . number_format($totalPorCobrar, 0, '.', ',')" title="Total por Cobrar" color="danger" />
+    {{-- Rango activo del resumen: deja claro "de que fecha a que fecha" son las
+         tarjetas. Lo actualiza el JS segun el filtro de fechas. --}}
+    <div class="mt-3 d-flex align-items-center gap-2 flex-wrap">
+        <span class="badge rounded-pill" style="background-color: rgba(13,110,253,.12); color:#0d6efd; border:1px solid rgba(13,110,253,.3); font-size:.85rem; padding:.45rem .75rem;">
+            <i class="bi bi-calendar-range me-1"></i><span id="rangoResumen">Todas las fechas</span>
+        </span>
+        <span class="text-muted small">Las tarjetas y el total reflejan este rango — cambialo en los filtros de abajo.</span>
+    </div>
+
+    {{-- Stat Cards (se recalculan segun el filtro; valueId para actualizar por JS) --}}
+    <div class="summary-cards mt-3">
+        <x-sinden.stat-card icon="bi bi-journal-text" valueId="cardTotalOrdenes" :value="$totalOrdenes" title="Total Ordenes" color="primary" />
+        <x-sinden.stat-card icon="bi bi-check-circle" valueId="cardOrdenesPagadas" :value="$ordenesPagadas" title="Ordenes Pagadas" color="success" />
+        <x-sinden.stat-card icon="bi bi-cash-stack" valueId="cardTotalRecaudado" :value="'$' . number_format($totalRecaudado, 0, '.', ',')" title="Total Recaudado" color="info" />
+        <x-sinden.stat-card icon="bi bi-exclamation-triangle" valueId="cardTotalPorCobrar" :value="'$' . number_format($totalPorCobrar, 0, '.', ',')" title="Total por Cobrar" color="danger" />
     </div>
 
     {{-- Filtros --}}
@@ -96,9 +105,6 @@
                 <table class="table table-hover align-middle mb-0 sinden-datatable" id="historialFinancieroTable" style="width:100%">
                     <thead>
                         <tr>
-                            <th class="text-center" style="width:40px">
-                                <input type="checkbox" class="form-check-input" id="checkAll" checked>
-                            </th>
                             <th>Orden</th>
                             <th>Cliente</th>
                             <th>Fecha</th>
@@ -112,21 +118,26 @@
                         </tr>
                     </thead>
                     <tfoot>
+                        {{-- Total del FILTRO COMPLETO: lo calcula el servidor sobre TODAS las
+                             ordenes del filtro (no solo la pagina), asi se ve "cuanto se hizo
+                             el dia" al instante sin importar cuantas ordenes haya. --}}
                         <tr class="table-light fw-bold">
-                            <td colspan="4" class="text-end">Totales seleccionados:</td>
-                            <td class="text-end" id="sumaTotal">$0</td>
-                            <td class="text-end" id="sumaPagado">$0</td>
-                            <td class="text-end" id="sumaSaldo">$0</td>
+                            <td colspan="3" class="text-end">
+                                <i class="bi bi-calculator me-1 text-primary"></i>Total del filtro
+                                (<span id="hfCount">0</span> ordenes):
+                            </td>
+                            <td class="text-end" id="hfTotal">$0</td>
+                            <td class="text-end text-success" id="hfPagado">$0</td>
+                            <td class="text-end text-danger" id="hfSaldo">$0</td>
                             <td colspan="4"></td>
                         </tr>
                         <tr class="table-light">
+                            <td colspan="6" class="text-end small text-muted">
+                                Subtotal (Sin IVA): <span id="hfSubtotal" class="fw-bold text-dark">$0</span>
+                            </td>
                             <td colspan="4" class="text-end small text-muted">
-                                Subtotal (Sin IVA): <span id="sumaSubtotal" class="fw-bold text-dark">$0</span>
+                                IVA: <span id="hfIva" class="fw-bold text-dark">$0</span>
                             </td>
-                            <td colspan="3" class="text-end small text-muted">
-                                IVA: <span id="sumaIva" class="fw-bold text-dark">$0</span>
-                            </td>
-                            <td colspan="4"></td>
                         </tr>
                     </tfoot>
                 </table>

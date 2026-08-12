@@ -11,15 +11,24 @@
         </x-slot>
     </x-sinden.page-header>
 
-    {{-- Stat Cards --}}
-    <div class="summary-cards">
-        <x-sinden.stat-card icon="bi bi-gear" :value="'$' . number_format($totalServicios, 0, '.', ',')" title="Total Servicios" color="info" />
-        <x-sinden.stat-card icon="bi bi-box" :value="'$' . number_format($totalMateriales, 0, '.', ',')" title="Total Materiales" color="warning" />
-        <x-sinden.stat-card icon="bi bi-bag-check" :value="'$' . number_format($totalProductos, 0, '.', ',')" title="Total Prod. Terminados" color="success" />
-        <x-sinden.stat-card icon="bi bi-cash" :value="'$' . number_format($totalSinIva, 0, '.', ',')" title="Total Sin IVA" color="secondary" />
-        <x-sinden.stat-card icon="bi bi-receipt" :value="'$' . number_format($totalIva, 0, '.', ',')" title="Total IVA" color="dark" />
-        <x-sinden.stat-card icon="bi bi-percent" :value="'$' . number_format($totalDescuentos, 0, '.', ',')" title="Total Descuentos" color="danger" />
-        <x-sinden.stat-card icon="bi bi-cash-stack" :value="'$' . number_format($granTotal, 0, '.', ',')" title="Gran Total" color="primary" />
+    {{-- Rango activo del resumen: deja claro "de que fecha a que fecha" son las
+         tarjetas de abajo. Lo actualiza el JS segun el filtro de fechas. --}}
+    <div class="mt-3 d-flex align-items-center gap-2 flex-wrap">
+        <span class="badge rounded-pill" style="background-color: rgba(13,110,253,.12); color:#0d6efd; border:1px solid rgba(13,110,253,.3); font-size:.85rem; padding:.45rem .75rem;">
+            <i class="bi bi-calendar-range me-1"></i><span id="rangoResumen">Todas las fechas</span>
+        </span>
+        <span class="text-muted small">Las tarjetas y el total reflejan este rango — cambialo en los filtros de abajo.</span>
+    </div>
+
+    {{-- Stat Cards (se recalculan segun el filtro; ver valueId para actualizarlas por JS) --}}
+    <div class="summary-cards mt-3">
+        <x-sinden.stat-card icon="bi bi-gear" valueId="cardServicios" :value="'$' . number_format($totalServicios, 0, '.', ',')" title="Total Servicios" color="info" />
+        <x-sinden.stat-card icon="bi bi-box" valueId="cardMateriales" :value="'$' . number_format($totalMateriales, 0, '.', ',')" title="Total Materiales" color="warning" />
+        <x-sinden.stat-card icon="bi bi-bag-check" valueId="cardProductos" :value="'$' . number_format($totalProductos, 0, '.', ',')" title="Total Prod. Terminados" color="success" />
+        <x-sinden.stat-card icon="bi bi-cash" valueId="cardSinIva" :value="'$' . number_format($totalSinIva, 0, '.', ',')" title="Total Sin IVA" color="secondary" />
+        <x-sinden.stat-card icon="bi bi-receipt" valueId="cardIva" :value="'$' . number_format($totalIva, 0, '.', ',')" title="Total IVA" color="dark" />
+        <x-sinden.stat-card icon="bi bi-percent" valueId="cardDescuentos" :value="'$' . number_format($totalDescuentos, 0, '.', ',')" title="Total Descuentos" color="danger" />
+        <x-sinden.stat-card icon="bi bi-cash-stack" valueId="cardGranTotal" :value="'$' . number_format($granTotal, 0, '.', ',')" title="Gran Total" color="primary" />
     </div>
 
     {{-- Filtros --}}

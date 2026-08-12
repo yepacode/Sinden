@@ -603,15 +603,40 @@ class ContabilidadController extends Controller
                 $query->whereDate('created_at', '<=', $request->input('fecha_hasta'));
             }
 
+            // Totales del FILTRO COMPLETO (todas las ordenes que cumplen el filtro, sin
+            // importar la paginacion). Un solo SUM en el servidor => el usuario ve "cuanto
+            // se hizo el dia" al instante aunque haya cientos de ordenes, sin cargar todas
+            // las filas en el navegador (nunca se cuelga por ese filtro).
+            $agg = (clone $query)->without(['cliente', 'pagos'])->select(\DB::raw(
+                'COUNT(*) as cnt,'
+                . ' COALESCE(SUM(total),0) as total,'
+                . ' COALESCE(SUM(subtotal),0) as subtotal,'
+                . ' COALESCE(SUM(monto_iva),0) as iva,'
+                . ' COALESCE(SUM(total_pagado),0) as pagado,'
+                . ' COALESCE(SUM(saldo),0) as saldo,'
+                . ' SUM(CASE WHEN saldo <= 0 AND total_pagado > 0 THEN 1 ELSE 0 END) as pagadas'
+            ))->first();
+
             return DataTables::of($query)
-                ->addColumn('checkbox', function ($o) {
-                    return '<input type="checkbox" class="form-check-input fila-check" checked'
-                        . ' data-total="' . $o->total . '"'
-                        . ' data-subtotal="' . $o->subtotal . '"'
-                        . ' data-iva="' . $o->monto_iva . '"'
-                        . ' data-pagado="' . $o->total_pagado . '"'
-                        . ' data-saldo="' . $o->saldo . '">';
-                })
+                ->with([
+                    'totalesFiltro' => [
+                        'count'    => (int) ($agg->cnt ?? 0),
+                        'total'    => '$' . number_format($agg->total ?? 0, 0, '.', ','),
+                        'pagado'   => '$' . number_format($agg->pagado ?? 0, 0, '.', ','),
+                        'saldo'    => '$' . number_format($agg->saldo ?? 0, 0, '.', ','),
+                        'subtotal' => '$' . number_format($agg->subtotal ?? 0, 0, '.', ','),
+                        'iva'      => '$' . number_format($agg->iva ?? 0, 0, '.', ','),
+                    ],
+                    // Tarjetas de resumen ACOTADAS al filtro (antes eran globales, crecian
+                    // sin fin); se recalculan con el rango de fechas que elija el usuario.
+                    'cards' => [
+                        'totalOrdenes'   => (int) ($agg->cnt ?? 0),
+                        'ordenesPagadas' => (int) ($agg->pagadas ?? 0),
+                        'totalRecaudado' => '$' . number_format($agg->pagado ?? 0, 0, '.', ','),
+                        'totalPorCobrar' => '$' . number_format($agg->saldo ?? 0, 0, '.', ','),
+                    ],
+                    'rango' => $this->rangoFechasLabel($request),
+                ])
                 ->addColumn('cliente_nombre', fn($o) => $o->cliente->nombre ?? '-')
                 ->addColumn('fecha_creacion', fn($o) => $o->created_at->format('d/m/Y'))
                 ->addColumn('total_formatted', fn($o) => '$' . number_format($o->total, 0, '.', ','))
@@ -663,7 +688,7 @@ class ContabilidadController extends Controller
                     $url = route('contabilidad.ordenes.show', $o);
                     return '<a href="' . $url . '" class="fw-semibold text-decoration-none">' . ($o->numero_orden ?? '-') . '</a>';
                 })
-                ->rawColumns(['checkbox', 'numero_orden', 'pagado_formatted', 'saldo_formatted', 'porcentaje_pagado', 'estado_pago_badge', 'num_pagos', 'acciones'])
+                ->rawColumns(['numero_orden', 'pagado_formatted', 'saldo_formatted', 'porcentaje_pagado', 'estado_pago_badge', 'num_pagos', 'acciones'])
                 ->make(true);
         }
 
@@ -829,12 +854,15 @@ class ContabilidadController extends Controller
                 $totalesQuery->whereDate('ordenes.created_at', '<=', $request->fecha_hasta);
             }
 
-            $totales = $totalesQuery->selectRaw('
+            $totales = $totalesQuery->selectRaw("
                 SUM(orden_items.subtotal) as sum_subtotal,
                 SUM(orden_items.monto_iva) as sum_iva,
                 SUM(orden_items.total) as sum_total,
-                SUM(orden_items.descuento_monto) as sum_descuento
-            ')->first();
+                SUM(orden_items.descuento_monto) as sum_descuento,
+                SUM(CASE WHEN orden_items.categoria = 'servicio' THEN orden_items.total ELSE 0 END) as sum_servicios,
+                SUM(CASE WHEN orden_items.categoria = 'material' THEN orden_items.total ELSE 0 END) as sum_materiales,
+                SUM(CASE WHEN orden_items.categoria = 'producto_terminado' THEN orden_items.total ELSE 0 END) as sum_productos
+            ")->first();
 
             return DataTables::of($query)
                 ->with([
@@ -843,7 +871,19 @@ class ContabilidadController extends Controller
                         'iva' => '$' . number_format($totales->sum_iva ?? 0, 0, '.', ','),
                         'total' => '$' . number_format($totales->sum_total ?? 0, 0, '.', ','),
                         'descuento' => '$' . number_format($totales->sum_descuento ?? 0, 0, '.', ','),
-                    ]
+                    ],
+                    // Tarjetas de resumen ACOTADAS al filtro (antes eran totales globales
+                    // que crecian sin fin). Se recalculan con cada filtro que ponga el usuario.
+                    'cards' => [
+                        'servicios'  => '$' . number_format($totales->sum_servicios ?? 0, 0, '.', ','),
+                        'materiales' => '$' . number_format($totales->sum_materiales ?? 0, 0, '.', ','),
+                        'productos'  => '$' . number_format($totales->sum_productos ?? 0, 0, '.', ','),
+                        'sinIva'     => '$' . number_format($totales->sum_subtotal ?? 0, 0, '.', ','),
+                        'iva'        => '$' . number_format($totales->sum_iva ?? 0, 0, '.', ','),
+                        'descuentos' => '$' . number_format($totales->sum_descuento ?? 0, 0, '.', ','),
+                        'granTotal'  => '$' . number_format($totales->sum_total ?? 0, 0, '.', ','),
+                    ],
+                    'rango' => $this->rangoFechasLabel($request),
                 ])
                 ->addColumn('numero_orden_link', function ($item) {
                     $url = route('contabilidad.ordenes.show', $item->orden_id);
@@ -988,6 +1028,27 @@ class ContabilidadController extends Controller
         ];
         $cfg = $map[$categoria] ?? ['secondary', strtoupper($categoria)];
         return '<span class="status-badge ' . $cfg[0] . '">' . $cfg[1] . '</span>';
+    }
+
+    /**
+     * Etiqueta legible del rango de fechas activo (para el resumen de contabilidad).
+     * Asi el usuario ve claramente "de que fecha a que fecha" esta el resumen que mira.
+     */
+    private function rangoFechasLabel(Request $request): string
+    {
+        $desde = $request->input('fecha_desde');
+        $hasta = $request->input('fecha_hasta');
+        $fmt = fn($f) => \Carbon\Carbon::parse($f)->format('d/m/Y');
+        if ($desde && $hasta) {
+            return 'Periodo: ' . $fmt($desde) . ' - ' . $fmt($hasta);
+        }
+        if ($desde) {
+            return 'Desde: ' . $fmt($desde);
+        }
+        if ($hasta) {
+            return 'Hasta: ' . $fmt($hasta);
+        }
+        return 'Todas las fechas';
     }
 
     protected function badgeMetodoPago(string $metodo): string

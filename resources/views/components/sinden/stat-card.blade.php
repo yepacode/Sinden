@@ -7,7 +7,8 @@
     'change' => null,
     'changeType' => 'neutral',
     'variant' => 'primary',
-    'color' => 'primary'
+    'color' => 'primary',
+    'valueId' => null
 ])
 
 @php
@@ -22,7 +23,7 @@ $cardVariant = $color ?? $variant;
         <i class="{{ $icon }}"></i>
     </div>
     <div class="card-content">
-        <h3 class="card-value">{{ $value }}</h3>
+        <h3 class="card-value"@if($valueId) id="{{ $valueId }}"@endif>{{ $value }}</h3>
         <p class="card-label">{{ $cardTitle }}</p>
         @if($cardDescription)
             <p class="card-description">{{ $cardDescription }}</p>
