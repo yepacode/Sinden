@@ -184,19 +184,41 @@ class CatalogoItemController extends Controller
 
     public function autocomplete(Request $request)
     {
-        $q = $request->get('q', '');
+        $q = trim($request->get('q', ''));
 
-        $query = CatalogoItem::where('activo', true);
+        $query = CatalogoItem::where('activo', true)
+            ->select('id', 'codigo', 'descripcion', 'precio_unitario', 'porcentaje_iva', 'categoria');
 
-        if (strlen($q) >= 1) {
-            $query->where(function ($qb) use ($q) {
-                $qb->where('codigo', 'LIKE', "%{$q}%")
-                    ->orWhere('descripcion', 'LIKE', "%{$q}%");
+        if ($q !== '') {
+            // Busqueda por PALABRAS: parte lo escrito en palabras y trae items que tengan
+            // AL MENOS UNA (en codigo o descripcion), en cualquier orden; ordena primero
+            // los que coinciden con MAS palabras (relevancia). Antes buscaba la frase
+            // completa pegada, por eso con 2+ palabras no encontraba nada.
+            $palabras = array_values(array_filter(
+                preg_split('/\s+/', $q),
+                fn($w) => $w !== ''
+            ));
+
+            // Filtro: el item coincide si CUALQUIER palabra esta en codigo o descripcion.
+            $query->where(function ($qb) use ($palabras) {
+                foreach ($palabras as $w) {
+                    $qb->orWhere('codigo', 'LIKE', "%{$w}%")
+                       ->orWhere('descripcion', 'LIKE', "%{$w}%");
+                }
             });
+
+            // Relevancia: cuantas palabras coinciden (mas coincidencias => mas arriba).
+            $casos = [];
+            $binds = [];
+            foreach ($palabras as $w) {
+                $casos[] = '(CASE WHEN codigo LIKE ? OR descripcion LIKE ? THEN 1 ELSE 0 END)';
+                $binds[] = "%{$w}%";
+                $binds[] = "%{$w}%";
+            }
+            $query->orderByRaw(implode(' + ', $casos) . ' DESC', $binds);
         }
 
         $items = $query
-            ->select('id', 'codigo', 'descripcion', 'precio_unitario', 'porcentaje_iva', 'categoria')
             ->orderBy('codigo')
             ->limit(20)
             ->get();
