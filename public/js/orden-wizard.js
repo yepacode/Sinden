@@ -1064,16 +1064,21 @@ function renderPanelBosquejos() {
         var imgSrc = $row.find('.pieza-bosquejo-thumb').attr('src');
         if (!imgSrc) return;
 
-        var nombreBosquejo = ($row.find('.bosquejo-name-text').text() || '').trim();
-        var nombrePieza = ($row.find('.pieza-nombre').val() || '').trim();
-        var caption = nombreBosquejo || nombrePieza || 'Bosquejo';
-        if (nombrePieza && nombreBosquejo && nombrePieza !== nombreBosquejo) {
-            caption = nombrePieza + ' · ' + nombreBosquejo;
-        }
+        // Al liquidar (panel "Ver Bosquejos") el cliente necesita ver bajo cada bosquejo
+        // la CANTIDAD, el MATERIAL y el CALIBRE de la pieza (en ese orden) — es lo util
+        // para poner precios. El "Pieza A · Cilindro" no le servia, se reemplaza.
+        var cantidad = ($row.find('.pieza-cantidad').val() || '').trim();
+        var material = ($row.find('.pieza-material').val() || '').trim();
+        var calibre  = ($row.find('.pieza-calibre').val() || '').trim();
+        var partes = [];
+        if (cantidad) partes.push('Cant: ' + cantidad);
+        if (material) partes.push(material);
+        if (calibre)  partes.push(calibre);
+        var caption = partes.join('  ·  ') || ($row.find('.pieza-nombre').val() || 'Pieza').trim();
 
         var $item = $('<div class="bosquejo-galeria-item"></div>');
         $item.append($('<img>').attr('src', imgSrc).attr('alt', caption).attr('loading', 'lazy'));
-        $item.append($('<div class="bosquejo-galeria-caption text-truncate"></div>').text(caption).attr('title', caption));
+        $item.append($('<div class="bosquejo-galeria-caption"></div>').text(caption).attr('title', caption));
         $galeria.append($item);
         count++;
     });
@@ -1210,6 +1215,16 @@ function agregarFilaPieza(opts) {
     renumerarFilasPiezas();
     marcarStepCompletado(2);
     if (!opts.skipAutoSave) {
+        // Apuntar a la pieza recien agregada: bajar hasta ella, resaltarla un momento y
+        // enfocar su nombre. Solo en alta MANUAL (en la precarga de edicion se omite).
+        var _filaNueva = document.getElementById('piezaRow_' + idx);
+        if (_filaNueva) {
+            _filaNueva.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            _filaNueva.classList.add('pieza-recien-agregada');
+            setTimeout(function () { _filaNueva.classList.remove('pieza-recien-agregada'); }, 1600);
+            var _nombreNueva = document.querySelector('#piezaRow_' + idx + ' .pieza-nombre');
+            if (_nombreNueva) { try { _nombreNueva.focus({ preventScroll: true }); } catch (e) {} }
+        }
         triggerAutoSave('pieza-add');
     }
 }
@@ -1252,7 +1267,7 @@ function renumerarFilasPiezas() {
 
 function actualizarContadorPiezas() {
     var total = $('#tbodyPiezas tr.pieza-row').length;
-    $('#contadorPiezas').text(total > 0 ? ' (' + total + ')' : '');
+    $('.contador-piezas').text(total > 0 ? ' (' + total + ')' : '');
 }
 
 function obtenerLetraPieza(index) {

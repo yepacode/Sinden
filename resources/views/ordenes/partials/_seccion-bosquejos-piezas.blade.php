@@ -105,6 +105,15 @@
     [data-bs-theme="dark"] .bosquejo-galeria-item .bosquejo-galeria-caption {
         border-top-color: #334155;
     }
+
+    /* Resaltado breve de la pieza recien agregada (para ubicarla al vuelo tras el auto-scroll). */
+    #tbodyPiezas tr.pieza-recien-agregada td {
+        animation: piezaNuevaFlash 1.6s ease-out;
+    }
+    @keyframes piezaNuevaFlash {
+        0%   { background-color: rgba(13,110,253,.28); }
+        100% { background-color: transparent; }
+    }
 </style>
 <div class="card border-0 shadow-sm mb-4 wizard-section" data-section="2" id="seccionBosquejosPiezas">
     <div class="card-header bg-white border-0 px-4 pt-4 pb-2">
@@ -114,17 +123,22 @@
     </div>
     <div class="card-body px-4 pb-4 pt-2">
 
-        {{-- Header con botones --}}
-        <div class="d-flex align-items-center justify-content-between mb-3">
-            <h6 class="mb-0 fw-semibold text-secondary">
-                <i class="bi bi-puzzle me-1"></i> Piezas
-            </h6>
-            <div class="d-flex gap-2">
+        {{-- Header: "Agregar Pieza" al CENTRO (mismo que el de abajo, para hallarlo siempre
+             en la mitad). Importar Matriz a la derecha, titulo a la izquierda. --}}
+        <div class="d-flex align-items-center mb-3">
+            <div class="flex-fill">
+                <h6 class="mb-0 fw-semibold text-secondary">
+                    <i class="bi bi-puzzle me-1"></i> Piezas
+                </h6>
+            </div>
+            <div class="flex-fill text-center">
+                <button type="button" class="btn btn-sm btn-primary" onclick="agregarFilaPieza()">
+                    <i class="bi bi-plus-lg me-1"></i> Agregar Pieza<span class="contador-piezas"></span>
+                </button>
+            </div>
+            <div class="flex-fill text-end">
                 <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalBosquejoMatriz">
                     <i class="bi bi-grid-3x3 me-1"></i> Importar Matriz
-                </button>
-                <button type="button" class="btn btn-sm btn-primary" onclick="agregarFilaPieza()">
-                    <i class="bi bi-plus-lg me-1"></i> Agregar Pieza<span id="contadorPiezas"></span>
                 </button>
             </div>
         </div>
@@ -156,14 +170,24 @@
             <br><small class="text-info"><i class="bi bi-info-circle me-1"></i>Sin piezas = Venta directa (se marca como ejecutada al generar)</small>
         </div>
 
-        {{-- Botones: Ver todos los bosquejos en panel flotante (en ambas esquinas para facilitar acceso en tablet) --}}
-        <div class="mt-3 d-flex justify-content-between">
-            <button type="button" class="btn btn-sm btn-outline-primary" onclick="abrirPanelBosquejos()">
-                <i class="bi bi-images me-1"></i> Ver Bosquejos
-            </button>
-            <button type="button" class="btn btn-sm btn-outline-primary" onclick="abrirPanelBosquejos()">
-                <i class="bi bi-images me-1"></i> Ver Bosquejos
-            </button>
+        {{-- Ver Bosquejos en ambas esquinas + "Agregar Pieza" al CENTRO (igual que arriba):
+             al terminar de editar la ultima pieza se puede agregar otra sin subir. --}}
+        <div class="mt-3 d-flex align-items-center">
+            <div class="flex-fill">
+                <button type="button" class="btn btn-sm btn-outline-primary" onclick="abrirPanelBosquejos()">
+                    <i class="bi bi-images me-1"></i> Ver Bosquejos
+                </button>
+            </div>
+            <div class="flex-fill text-center">
+                <button type="button" class="btn btn-sm btn-primary" onclick="agregarFilaPieza()">
+                    <i class="bi bi-plus-lg me-1"></i> Agregar Pieza<span class="contador-piezas"></span>
+                </button>
+            </div>
+            <div class="flex-fill text-end">
+                <button type="button" class="btn btn-sm btn-outline-primary" onclick="abrirPanelBosquejos()">
+                    <i class="bi bi-images me-1"></i> Ver Bosquejos
+                </button>
+            </div>
         </div>
 
         {{-- Divs ocultos para compatibilidad con JS residual --}}
