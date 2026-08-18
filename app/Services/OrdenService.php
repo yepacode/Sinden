@@ -640,18 +640,44 @@ class OrdenService
             ]);
         }
 
-        $orden->pagos()->forceDelete();
+        // NO borrar los pagos APROBADOS: son registros financieros y NO deben perderse al
+        // editar/reguardar la orden. (Bug grave: forceDelete() borraba TODOS y los recreaba
+        // como pendientes -> los pagos ya aprobados reaparecian en "Por Aprobar" y perdian
+        // su id/quien-aprobo.) Se re-sincronizan SOLO los pendientes; los aprobados quedan
+        // intactos. Propiedad garantizada: un pago aprobado nunca se borra ni se reevalua.
+        $aprobados = $orden->pagos()->where('aprobado', true)->get();
+        $orden->pagos()->where('aprobado', false)->forceDelete();
 
         $autoAprueba = $user->hasAnyRole(['Administrador', 'Contabilidad']);
+
+        // Para no DUPLICAR: un pago enviado que ya corresponde a uno aprobado (mismo
+        // monto+metodo+referencia) NO se recrea; se emparejan consumiendo. El resto se crea.
+        $poolAprobados = $aprobados->map(fn($p) => (object) [
+            'monto'  => (float) $p->monto,
+            'metodo' => $p->metodo_pago,
+            'ref'    => (string) $p->referencia_pago,
+            'usado'  => false,
+        ]);
 
         foreach ($pagos as $pago) {
             $monto = $this->normalizarMonto($pago['monto'] ?? 0);
             if ($monto <= 0) continue;
+            $metodo = $pago['metodo_pago'] ?? 'efectivo';
+            $ref = (string) ($pago['referencia_pago'] ?? '');
+
+            $yaAprobado = $poolAprobados->first(fn($a) => !$a->usado
+                && abs($a->monto - $monto) < 0.005
+                && $a->metodo === $metodo
+                && $a->ref === $ref);
+            if ($yaAprobado) {
+                $yaAprobado->usado = true; // ya existe aprobado, no recrear
+                continue;
+            }
 
             Pago::create([
                 'orden_id' => $orden->id,
                 'monto' => $monto,
-                'metodo_pago' => $pago['metodo_pago'] ?? 'efectivo',
+                'metodo_pago' => $metodo,
                 'referencia_pago' => $pago['referencia_pago'] ?? null,
                 'registrado_por' => $user->id,
                 'aprobado' => $autoAprueba,
