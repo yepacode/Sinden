@@ -957,7 +957,9 @@ function sincronizarBosquejosDesdeRespuesta(bosquejosBackend) {
 function agregarPiezaConBosquejo(bosquejoData) {
     var bosquejoIndex = wizardState.bosquejos.length;
     wizardState.bosquejos.push(bosquejoData);
-    agregarFilaPieza();
+    // skipScroll: al importar (matriz/grupo/multi-archivo) NO mover la pantalla ni enfocar
+    // la fila nueva, para no devolver el modal de matriz al inicio (perdia la posicion).
+    agregarFilaPieza({ skipScroll: true });
     var piezaIdx = wizardState.piezaCounter;
     vincularBosquejoAPieza(piezaIdx, bosquejoIndex);
     generarEspecificacion(piezaIdx);
@@ -1215,10 +1217,13 @@ function agregarFilaPieza(opts) {
     renumerarFilasPiezas();
     marcarStepCompletado(2);
     if (!opts.skipAutoSave) {
-        // Apuntar a la pieza recien agregada: bajar hasta ella, resaltarla un momento y
-        // enfocar su nombre. Solo en alta MANUAL (en la precarga de edicion se omite).
+        // Apuntar a la pieza recien agregada: bajar hasta ella, resaltarla y enfocar su
+        // nombre. Solo en alta MANUAL ("Agregar Pieza"). En IMPORTACION (matriz / grupo /
+        // multi-archivo) se OMITE con opts.skipScroll: enfocar/scrollear una fila que queda
+        // detras del modal de matriz lo devolvia al INICIO y estorbaba al importar varias
+        // plantillas seguidas (la galeria perdia la posicion del scroll).
         var _filaNueva = document.getElementById('piezaRow_' + idx);
-        if (_filaNueva) {
+        if (_filaNueva && !opts.skipScroll) {
             _filaNueva.scrollIntoView({ behavior: 'smooth', block: 'center' });
             _filaNueva.classList.add('pieza-recien-agregada');
             setTimeout(function () { _filaNueva.classList.remove('pieza-recien-agregada'); }, 1600);
