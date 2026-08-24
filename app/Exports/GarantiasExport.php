@@ -50,7 +50,7 @@ class GarantiasExport implements FromCollection, WithHeadings, WithMapping, With
             $g->cantidad_devuelta,
             $g->motivo,
             $g->cobrable ? 'Si' : 'No',
-            $g->cobrable && $g->monto_cobro ? number_format($g->monto_cobro, 0, ',', '.') : '-',
+            $g->cobrable && $g->monto_cobro ? number_format($g->monto_cobro, 0, '.', ',') : '-',
             strtoupper(str_replace('_', ' ', $g->estado)),
             $g->operarioAsignado->name ?? 'Sin asignar',
             $g->created_at ? $g->created_at->format('d/m/Y H:i') : '-',

@@ -54,12 +54,12 @@ class OrdenesExport implements FromCollection, WithHeadings, WithMapping, WithSt
             strtoupper(str_replace('_', ' ', $orden->estado_trabajo)),
             $orden->estado_entrega ? strtoupper(str_replace('_', ' ', $orden->estado_entrega)) : '-',
             $orden->estado_pago ? strtoupper(str_replace('_', ' ', $orden->estado_pago)) : '-',
-            number_format($orden->items->sum('descuento_monto'), 0, ',', '.'),
-            number_format($orden->subtotal, 0, ',', '.'),
-            number_format($orden->monto_iva, 0, ',', '.'),
-            number_format($orden->total, 0, ',', '.'),
-            number_format($orden->total_pagado, 0, ',', '.'),
-            number_format($orden->saldo, 0, ',', '.'),
+            number_format($orden->items->sum('descuento_monto'), 0, '.', ','),
+            number_format($orden->subtotal, 0, '.', ','),
+            number_format($orden->monto_iva, 0, '.', ','),
+            number_format($orden->total, 0, '.', ','),
+            number_format($orden->total_pagado, 0, '.', ','),
+            number_format($orden->saldo, 0, '.', ','),
         ];
     }
 

@@ -121,11 +121,11 @@
                         <td>{{ $item->codigo ?? '-' }}</td>
                         <td>{{ $item->descripcion }}</td>
                         <td class="text-center">{{ \App\Helpers\Format::cantidad($item->cantidad) }}</td>
-                        <td class="text-end">${{ number_format($item->precio_unitario, 0, ',', '.') }}</td>
+                        <td class="text-end">${{ number_format($item->precio_unitario, 0, '.', ',') }}</td>
                         <td class="text-center">{{ number_format($item->porcentaje_iva, 0) }}%</td>
                         <td class="text-center">{{ $item->descuento_porcentaje > 0 ? \App\Helpers\Format::cantidad($item->descuento_porcentaje) . '%' : '-' }}</td>
-                        <td class="text-end">${{ number_format($item->subtotal, 0, ',', '.') }}</td>
-                        <td class="text-end fw-semibold">${{ number_format($item->total, 0, ',', '.') }}</td>
+                        <td class="text-end">${{ number_format($item->subtotal, 0, '.', ',') }}</td>
+                        <td class="text-end fw-semibold">${{ number_format($item->total, 0, '.', ',') }}</td>
                     </tr>
                 @endforeach
             </tbody>
@@ -137,29 +137,29 @@
                 <tr>
                     <td colspan="7"></td>
                     <td class="text-end text-muted" style="border-top: 1px solid #d1d5db;">Subtotal bruto</td>
-                    <td class="text-end fw-semibold" style="border-top: 1px solid #d1d5db;">${{ number_format($orden->subtotal, 0, ',', '.') }}</td>
+                    <td class="text-end fw-semibold" style="border-top: 1px solid #d1d5db;">${{ number_format($orden->subtotal, 0, '.', ',') }}</td>
                 </tr>
                 <tr>
                     <td colspan="7"></td>
                     <td class="text-end text-muted">IVA</td>
-                    <td class="text-end fw-semibold">${{ number_format($orden->monto_iva, 0, ',', '.') }}</td>
+                    <td class="text-end fw-semibold">${{ number_format($orden->monto_iva, 0, '.', ',') }}</td>
                 </tr>
                 <tr>
                     <td colspan="7"></td>
                     <td class="text-end fw-bold">TOTAL</td>
-                    <td class="text-end fw-bold">${{ number_format($totalAntesDescuentoPdf, 0, ',', '.') }}</td>
+                    <td class="text-end fw-bold">${{ number_format($totalAntesDescuentoPdf, 0, '.', ',') }}</td>
                 </tr>
                 @if($totalDescuentosPdf > 0)
                     <tr>
                         <td colspan="7"></td>
                         <td class="text-end" style="color:#b91c1c;">Descuento</td>
-                        <td class="text-end fw-semibold" style="color:#b91c1c;">-${{ number_format($totalDescuentosPdf, 0, ',', '.') }}</td>
+                        <td class="text-end fw-semibold" style="color:#b91c1c;">-${{ number_format($totalDescuentosPdf, 0, '.', ',') }}</td>
                     </tr>
                 @endif
                 <tr class="total-row">
                     <td colspan="7"></td>
                     <td class="text-end fw-bold">Total con retenciones</td>
-                    <td class="text-end fw-bold" style="font-size: 11px;">${{ number_format($orden->total, 0, ',', '.') }}</td>
+                    <td class="text-end fw-bold" style="font-size: 11px;">${{ number_format($orden->total, 0, '.', ',') }}</td>
                 </tr>
             </tfoot>
         </table>
@@ -186,7 +186,7 @@
                 @foreach($pagosAprobados->sortByDesc('created_at') as $pago)
                     <tr>
                         <td>{{ $pago->created_at->timezone('America/Bogota')->format('d/m/Y') }}</td>
-                        <td class="text-end fw-semibold">${{ number_format($pago->monto, 0, ',', '.') }}</td>
+                        <td class="text-end fw-semibold">${{ number_format($pago->monto, 0, '.', ',') }}</td>
                         <td>{{ ($tiposPagoMapa ?? [])[$pago->metodo_pago]['etiqueta'] ?? (($tiposPagoMapa ?? [])[$pago->metodo_pago]['nombre'] ?? ucfirst($pago->metodo_pago)) }}</td>
                         <td>{{ $pago->referencia_pago ?? '-' }}</td>
                         <td>{{ $pago->registradoPorUsuario->name ?? '-' }}</td>
@@ -202,16 +202,16 @@
     <table style="width: 250px; margin-left: auto; margin-top: 8px; font-size: 9px;">
         <tr>
             <td style="padding: 2px 5px;">Total</td>
-            <td class="text-end fw-bold" style="padding: 2px 5px;">${{ number_format($orden->total, 0, ',', '.') }}</td>
+            <td class="text-end fw-bold" style="padding: 2px 5px;">${{ number_format($orden->total, 0, '.', ',') }}</td>
         </tr>
         <tr>
             <td style="padding: 2px 5px;">Pagado</td>
-            <td class="text-end fw-semibold text-success" style="padding: 2px 5px;">${{ number_format($orden->total_pagado, 0, ',', '.') }}</td>
+            <td class="text-end fw-semibold text-success" style="padding: 2px 5px;">${{ number_format($orden->total_pagado, 0, '.', ',') }}</td>
         </tr>
         <tr style="border-top: 2px solid #4A7C59;">
             <td class="fw-bold" style="padding: 3px 5px;">Saldo</td>
             <td class="text-end fw-bold {{ $orden->saldo > 0 ? 'text-danger' : 'text-success' }}" style="padding: 3px 5px; font-size: 11px;">
-                ${{ number_format($orden->saldo, 0, ',', '.') }}
+                ${{ number_format($orden->saldo, 0, '.', ',') }}
             </td>
         </tr>
     </table>

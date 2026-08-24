@@ -81,7 +81,7 @@
         <x-sinden.stat-card icon="bi bi-file-earmark" :value="$borradores" title="Borradores" color="secondary" />
         <x-sinden.stat-card icon="bi bi-gear" :value="$enProceso" title="En Proceso" color="warning" />
         <x-sinden.stat-card icon="bi bi-check-circle" :value="$ejecutadas" title="Ejecutadas" color="success" />
-        <x-sinden.stat-card icon="bi bi-currency-dollar" :value="'$' . number_format($saldoPendienteTotal, 0, ',', '.')" title="Saldo Pendiente" color="danger" />
+        <x-sinden.stat-card icon="bi bi-currency-dollar" :value="'$' . number_format($saldoPendienteTotal, 0, '.', ',')" title="Saldo Pendiente" color="danger" />
     </div>
 
     {{-- Filtros --}}

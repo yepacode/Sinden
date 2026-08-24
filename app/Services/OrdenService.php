@@ -299,8 +299,9 @@ class OrdenService
 
     /**
      * Normaliza un monto que puede llegar como numero o como string formateado
-     * en pesos (ej. "1.500.000,50"). Garantiza que el resto del sistema reciba
+     * en pesos (ej. "1,500,000.50"). Garantiza que el resto del sistema reciba
      * siempre un float, sin importar el formato del input del frontend.
+     * Nomenclatura US en todo el sistema: miles con coma, decimales con punto.
      */
     protected function normalizarMonto($valor): float
     {
@@ -308,9 +309,8 @@ class OrdenService
             return (float) $valor;
         }
         if (is_string($valor)) {
-            // Quitar simbolos y separadores de miles (.), coma decimal -> punto
-            $limpio = str_replace(['$', ' ', '.'], '', $valor);
-            $limpio = str_replace(',', '.', $limpio);
+            // Formato US: quitar simbolos y separadores de miles (,); el punto es decimal.
+            $limpio = str_replace(['$', ' ', ','], '', $valor);
             return is_numeric($limpio) ? (float) $limpio : 0.0;
         }
         return 0.0;
@@ -634,8 +634,8 @@ class OrdenService
         if ($sumaSolicitada > $totalCalculado + 0.005) {
             throw \Illuminate\Validation\ValidationException::withMessages([
                 'pagos' => [
-                    'La suma de abonos ($' . number_format($sumaSolicitada, 0, ',', '.') .
-                    ') excede el total de la orden ($' . number_format($totalCalculado, 0, ',', '.') . ').',
+                    'La suma de abonos ($' . number_format($sumaSolicitada, 0, '.', ',') .
+                    ') excede el total de la orden ($' . number_format($totalCalculado, 0, '.', ',') . ').',
                 ],
             ]);
         }

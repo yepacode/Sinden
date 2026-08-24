@@ -120,7 +120,7 @@
                                                 </a>
                                             </td>
                                             <td><span class="status-badge {{ $badge[0] }}">{{ $badge[1] }}</span></td>
-                                            <td class="text-end">${{ number_format($orden->total, 0, ',', '.') }}</td>
+                                            <td class="text-end">${{ number_format($orden->total, 0, '.', ',') }}</td>
                                             <td class="text-muted small">{{ $orden->created_at->format('d/m/Y') }}</td>
                                         </tr>
                                     @endforeach

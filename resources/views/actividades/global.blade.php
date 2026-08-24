@@ -18,7 +18,7 @@
         <x-sinden.stat-card icon="bi bi-calendar-check" :value="$stats['total_hoy']" title="Hoy" color="success" />
         <x-sinden.stat-card icon="bi bi-calendar-week" :value="$stats['total_semana']" title="Esta Semana" color="primary" />
         <x-sinden.stat-card icon="bi bi-people" :value="$stats['usuarios_activos_hoy']" title="Usuarios Activos Hoy" color="info" />
-        <x-sinden.stat-card icon="bi bi-database" :value="number_format($stats['total_registros'], 0, ',', '.')" title="Total Registros" color="secondary" />
+        <x-sinden.stat-card icon="bi bi-database" :value="number_format($stats['total_registros'], 0, '.', ',')" title="Total Registros" color="secondary" />
     </div>
 
     {{-- Filtros --}}

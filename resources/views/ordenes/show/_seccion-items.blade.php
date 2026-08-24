@@ -27,18 +27,18 @@
                                 <td><span class="badge bg-light text-dark border">{{ $item->codigo ?? '-' }}</span></td>
                                 <td>{{ $item->descripcion }}</td>
                                 <td class="text-center">{{ \App\Helpers\Format::cantidad($item->cantidad) }}</td>
-                                <td class="text-end">${{ number_format($item->precio_unitario, 0, ',', '.') }}</td>
+                                <td class="text-end">${{ number_format($item->precio_unitario, 0, '.', ',') }}</td>
                                 <td class="text-center">{{ number_format($item->porcentaje_iva, 0) }}%</td>
                                 <td class="text-center">
                                     @if($item->descuento_porcentaje > 0)
                                         <span class="text-danger">{{ \App\Helpers\Format::cantidad($item->descuento_porcentaje) }}%</span>
-                                        <div class="small text-muted">-${{ number_format($item->descuento_monto, 0, ',', '.') }}</div>
+                                        <div class="small text-muted">-${{ number_format($item->descuento_monto, 0, '.', ',') }}</div>
                                     @else
                                         <span class="text-muted">-</span>
                                     @endif
                                 </td>
-                                <td class="text-end">${{ number_format($item->subtotal, 0, ',', '.') }}</td>
-                                <td class="text-end fw-semibold">${{ number_format($item->total, 0, ',', '.') }}</td>
+                                <td class="text-end">${{ number_format($item->subtotal, 0, '.', ',') }}</td>
+                                <td class="text-end fw-semibold">${{ number_format($item->total, 0, '.', ',') }}</td>
                             </tr>
                         @endforeach
                     </tbody>
@@ -50,29 +50,29 @@
                         <tr>
                             <td colspan="7"></td>
                             <td class="text-end text-muted small">Subtotal bruto</td>
-                            <td class="text-end fw-medium">${{ number_format($orden->subtotal, 0, ',', '.') }}</td>
+                            <td class="text-end fw-medium">${{ number_format($orden->subtotal, 0, '.', ',') }}</td>
                         </tr>
                         <tr>
                             <td colspan="7"></td>
                             <td class="text-end text-muted small">IVA</td>
-                            <td class="text-end fw-medium">${{ number_format($orden->monto_iva, 0, ',', '.') }}</td>
+                            <td class="text-end fw-medium">${{ number_format($orden->monto_iva, 0, '.', ',') }}</td>
                         </tr>
                         <tr>
                             <td colspan="7"></td>
                             <td class="text-end fw-bold">TOTAL</td>
-                            <td class="text-end fw-bold fs-6">${{ number_format($totalAntesDescuento, 0, ',', '.') }}</td>
+                            <td class="text-end fw-bold fs-6">${{ number_format($totalAntesDescuento, 0, '.', ',') }}</td>
                         </tr>
                         @if($totalDescuentos > 0)
                             <tr>
                                 <td colspan="7"></td>
                                 <td class="text-end text-danger small">Descuento</td>
-                                <td class="text-end fw-medium text-danger">-${{ number_format($totalDescuentos, 0, ',', '.') }}</td>
+                                <td class="text-end fw-medium text-danger">-${{ number_format($totalDescuentos, 0, '.', ',') }}</td>
                             </tr>
                         @endif
                         <tr>
                             <td colspan="7"></td>
                             <td class="text-end fw-bold">Total con retenciones</td>
-                            <td class="text-end fw-bold fs-6 text-primary">${{ number_format($orden->total, 0, ',', '.') }}</td>
+                            <td class="text-end fw-bold fs-6 text-primary">${{ number_format($orden->total, 0, '.', ',') }}</td>
                         </tr>
                     </tfoot>
                 </table>
@@ -92,7 +92,7 @@
                                 <span class="badge bg-{{ $catColors[$cat] ?? 'secondary' }} bg-opacity-10 text-{{ $catColors[$cat] ?? 'secondary' }} small">
                                     {{ $catLabels[$cat] ?? ucfirst($cat) }}
                                 </span>
-                                <span class="fw-semibold ms-1">${{ number_format($totales['total'], 0, ',', '.') }}</span>
+                                <span class="fw-semibold ms-1">${{ number_format($totales['total'], 0, '.', ',') }}</span>
                             </div>
                         @endforeach
                     </div>

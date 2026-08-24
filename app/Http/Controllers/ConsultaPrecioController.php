@@ -42,9 +42,9 @@ class ConsultaPrecioController extends Controller
         return response()->json([
             'encontrado' => true,
             'precio' => $resultado->precio,
-            'precio_formato' => '$' . number_format($resultado->precio, 0, ',', '.'),
+            'precio_formato' => '$' . number_format($resultado->precio, 0, '.', ','),
             'precio_minimo' => $resultado->precio_minimo,
-            'precio_minimo_formato' => '$' . number_format($resultado->precio_minimo, 0, ',', '.'),
+            'precio_minimo_formato' => '$' . number_format($resultado->precio_minimo, 0, '.', ','),
             'etiqueta_servicio' => $resultado->etiqueta_servicio,
             'clave_calibre' => $resultado->clave_calibre,
             'calibre_mm' => $resultado->calibre_mm,

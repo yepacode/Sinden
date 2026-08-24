@@ -57,7 +57,7 @@
         <x-sinden.stat-card icon="bi bi-shield-exclamation" :value="$abiertas" title="Abiertas" color="warning" />
         <x-sinden.stat-card icon="bi bi-gear" :value="$enProceso" title="En Proceso" color="info" />
         <x-sinden.stat-card icon="bi bi-check-circle" :value="$completadas" title="Listas Re-entrega" color="success" />
-        <x-sinden.stat-card icon="bi bi-cash" :value="'$' . number_format($totalCobrables, 0, ',', '.')" title="Total Cobrable" color="danger" />
+        <x-sinden.stat-card icon="bi bi-cash" :value="'$' . number_format($totalCobrables, 0, '.', ',')" title="Total Cobrable" color="danger" />
     </div>
 
     {{-- Filtros --}}

@@ -21,11 +21,11 @@
         @endif
         @if(\App\Models\ConfiguracionSistema::metricaVisible('admin', 'saldo_pendiente_total'))
         <a href="{{ route('contabilidad.ordenes-pendientes') }}" class="text-decoration-none">
-            <x-sinden.stat-card icon="bi bi-currency-dollar" :value="'$' . number_format($stats['saldo_pendiente_total'], 0, ',', '.')" title="Saldo Pendiente" color="danger" />
+            <x-sinden.stat-card icon="bi bi-currency-dollar" :value="'$' . number_format($stats['saldo_pendiente_total'], 0, '.', ',')" title="Saldo Pendiente" color="danger" />
         </a>
         @endif
         @if(\App\Models\ConfiguracionSistema::metricaVisible('admin', 'recaudado_hoy'))
-        <x-sinden.stat-card icon="bi bi-cash-stack" :value="'$' . number_format($stats['recaudado_hoy'], 0, ',', '.')" title="Recaudado Hoy" color="success" />
+        <x-sinden.stat-card icon="bi bi-cash-stack" :value="'$' . number_format($stats['recaudado_hoy'], 0, '.', ',')" title="Recaudado Hoy" color="success" />
         @endif
     </div>
 

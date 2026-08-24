@@ -350,7 +350,7 @@ class OrdenController extends Controller
                     return $this->badgePorcentajeTotal($o);
                 })
                 ->addColumn('total_formatted', function ($o) {
-                    return '$' . number_format($o->total, 0, ',', '.');
+                    return '$' . number_format($o->total, 0, '.', ',');
                 })
                 ->addColumn('saldo_formatted', function ($o) {
                     if ($o->saldo > 0) {
@@ -360,7 +360,7 @@ class OrdenController extends Controller
                     } else {
                         $class = '';
                     }
-                    return '<span class="' . $class . '">$' . number_format($o->saldo, 0, ',', '.') . '</span>';
+                    return '<span class="' . $class . '">$' . number_format($o->saldo, 0, '.', ',') . '</span>';
                 })
                 ->addColumn('acciones', function ($o) {
                     $puedeEscribir = auth()->user()->hasAnyRole(['Administrador', 'Recepcion']);
@@ -952,7 +952,7 @@ class OrdenController extends Controller
         if ((float) $request->monto > $disponible + 0.005) {
             return response()->json([
                 'success' => false,
-                'message' => 'El monto excede el saldo disponible. Maximo: $' . number_format($disponible, 0, ',', '.'),
+                'message' => 'El monto excede el saldo disponible. Maximo: $' . number_format($disponible, 0, '.', ','),
             ], 422);
         }
 
@@ -973,7 +973,7 @@ class OrdenController extends Controller
 
         $this->registrarCreacion(
             'pago.registrado',
-            'Pago de $' . number_format($request->monto, 0, ',', '.') . " registrado en orden " . ($orden->numero_orden ?? 'ID:' . $orden->id),
+            'Pago de $' . number_format($request->monto, 0, '.', ',') . " registrado en orden " . ($orden->numero_orden ?? 'ID:' . $orden->id),
             $pago,
             $orden->id
         );
@@ -989,14 +989,14 @@ class OrdenController extends Controller
             'message' => 'Pago registrado.' . (!$autoAprueba ? ' Pendiente de aprobacion por Contabilidad.' : ''),
             'pago' => [
                 'id' => $pago->id,
-                'monto' => '$' . number_format($pago->monto, 0, ',', '.'),
+                'monto' => '$' . number_format($pago->monto, 0, '.', ','),
                 'metodo_pago' => $pago->metodo_pago,
                 'aprobado' => $pago->aprobado,
                 'fecha' => $pago->created_at->format('d/m/Y H:i'),
                 'registrado_por' => $user->name,
             ],
-            'nuevo_saldo' => '$' . number_format($ordenFresh->saldo, 0, ',', '.'),
-            'nuevo_total_pagado' => '$' . number_format($ordenFresh->total_pagado, 0, ',', '.'),
+            'nuevo_saldo' => '$' . number_format($ordenFresh->saldo, 0, '.', ','),
+            'nuevo_total_pagado' => '$' . number_format($ordenFresh->total_pagado, 0, '.', ','),
             'estado_pago' => $ordenFresh->estado_pago,
         ]);
     }
@@ -1100,8 +1100,8 @@ class OrdenController extends Controller
             $html .= '<td>' . ($o->created_at ? $o->created_at->format('d/m/Y') : '-') . '</td>';
             $html .= '<td>' . ($o->fecha_entrega ? $o->fecha_entrega->format('d/m/Y') : '-') . '</td>';
             $html .= '<td>' . $estado . '</td>';
-            $html .= '<td class="text-end">$' . number_format($o->total, 0, ',', '.') . '</td>';
-            $html .= '<td class="text-end">$' . number_format($o->saldo, 0, ',', '.') . '</td>';
+            $html .= '<td class="text-end">$' . number_format($o->total, 0, '.', ',') . '</td>';
+            $html .= '<td class="text-end">$' . number_format($o->saldo, 0, '.', ',') . '</td>';
             $html .= '</tr>';
         }
 

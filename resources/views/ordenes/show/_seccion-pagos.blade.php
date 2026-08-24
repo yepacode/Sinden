@@ -18,7 +18,7 @@
                 @foreach($orden->pagos->sortByDesc('created_at') as $pago)
                     <div class="d-flex justify-content-between align-items-start py-2 {{ !$loop->last ? 'border-bottom' : '' }}" @if($pago->trashed()) style="opacity: 0.55;" @endif>
                         <div>
-                            <span class="fw-semibold" @if($pago->trashed()) style="text-decoration: line-through;" @endif>${{ number_format($pago->monto, 0, ',', '.') }}</span>
+                            <span class="fw-semibold" @if($pago->trashed()) style="text-decoration: line-through;" @endif>${{ number_format($pago->monto, 0, '.', ',') }}</span>
                             @php($_tp = ($tiposPagoMapa ?? [])[$pago->metodo_pago] ?? null)
                             <span class="badge border ms-1 small @if($_tp)badge-metodo @endif" @if($_tp) style="--m-fg-dark: {{ $_tp['hex_dark'] ?? $_tp['hex'] }}; background-color: {{ $_tp['bg'] }}; color: {{ $_tp['hex'] }}; border-color: {{ $_tp['hex'] }}33 !important;" @endif>
                                 @if($_tp)<i class="bi {{ $_tp['icono'] }} me-1"></i>@endif{{ $_tp['etiqueta'] ?? ucfirst($pago->metodo_pago) }}
@@ -56,16 +56,16 @@
         <div class="border-top mt-2 pt-2" id="resumenPagos">
             <div class="d-flex justify-content-between small">
                 <span class="text-muted">Total</span>
-                <span class="fw-semibold">${{ number_format($orden->total, 0, ',', '.') }}</span>
+                <span class="fw-semibold">${{ number_format($orden->total, 0, '.', ',') }}</span>
             </div>
             <div class="d-flex justify-content-between small">
                 <span class="text-muted">Pagado</span>
-                <span class="fw-semibold text-success" id="totalPagadoDisplay">${{ number_format($orden->total_pagado, 0, ',', '.') }}</span>
+                <span class="fw-semibold text-success" id="totalPagadoDisplay">${{ number_format($orden->total_pagado, 0, '.', ',') }}</span>
             </div>
             <div class="d-flex justify-content-between">
                 <span class="fw-bold">Saldo</span>
                 <span class="fw-bold {{ $orden->saldo > 0 ? 'text-danger' : 'text-success' }}" id="saldoDisplay">
-                    ${{ number_format($orden->saldo, 0, ',', '.') }}
+                    ${{ number_format($orden->saldo, 0, '.', ',') }}
                 </span>
             </div>
         </div>

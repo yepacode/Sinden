@@ -25,7 +25,7 @@
     {{-- Summary Cards --}}
     <div class="summary-cards">
         <x-sinden.stat-card icon="bi bi-tags" :value="$totalServicios" title="Tipos de Servicio" color="primary" />
-        <x-sinden.stat-card icon="bi bi-grid-3x3" :value="number_format($totalRegistros, 0, ',', '.')" title="Registros de Precios" color="info" />
+        <x-sinden.stat-card icon="bi bi-grid-3x3" :value="number_format($totalRegistros, 0, '.', ',')" title="Registros de Precios" color="info" />
         <x-sinden.stat-card icon="bi bi-clock" :value="$ultimaActualizacion ? \Carbon\Carbon::parse($ultimaActualizacion)->format('d/m/Y H:i') : 'N/A'" title="Ultima Actualizacion" color="secondary" />
     </div>
 

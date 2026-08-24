@@ -35,7 +35,7 @@
                             </span>
                             @if($garantia->cobrable)
                                 <span class="badge bg-danger bg-opacity-10 text-danger border border-danger" style="white-space: nowrap;">
-                                    <i class="bi bi-cash me-1"></i>Cobrable: ${{ number_format($garantia->monto_cobro, 0, ',', '.') }}
+                                    <i class="bi bi-cash me-1"></i>Cobrable: ${{ number_format($garantia->monto_cobro, 0, '.', ',') }}
                                 </span>
                             @endif
                         </div>

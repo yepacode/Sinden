@@ -125,9 +125,9 @@ Swal.fire({
 
 ### FORMATO DE MONEDA
 - **Base de datos:** `DECIMAL(12,2)`
-- **Visualizacion:** `$1.500.000` (pesos colombianos, punto como separador de miles)
-- Usar `'$' . number_format($valor, 0, ',', '.')` para mostrar valores enteros
-- Usar `'$' . number_format($valor, 2, ',', '.')` para mostrar con decimales
+- **Visualizacion:** `$1,500,000` (nomenclatura US en todo el sistema: miles con coma, decimales con punto)
+- Usar `'$' . number_format($valor, 0, '.', ',')` para mostrar valores enteros
+- Usar `'$' . number_format($valor, 2, '.', ',')` para mostrar con decimales
 
 ### COMPONENTES UI REUTILIZABLES
 ```

@@ -154,7 +154,7 @@ function registrarPago() {
 
     var saldoMax = (typeof ORDEN_SALDO_DISPONIBLE !== 'undefined') ? parseFloat(ORDEN_SALDO_DISPONIBLE) : 0;
     if (monto > saldoMax + 0.005) {
-        Swal.fire('Monto excede el saldo', 'El maximo permitido es $' + saldoMax.toLocaleString('es-CO') + '.', 'warning');
+        Swal.fire('Monto excede el saldo', 'El maximo permitido es $' + saldoMax.toLocaleString('en-US') + '.', 'warning');
         return;
     }
 
@@ -546,7 +546,7 @@ function asignarOperarioGarantia(garantiaId) {
 // ==========================================
 function formatCOPDetalle(valor) {
     if (isNaN(valor) || valor === null) valor = 0;
-    return Math.round(valor).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    return Math.round(valor).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
 
 function ucfirst(str) {

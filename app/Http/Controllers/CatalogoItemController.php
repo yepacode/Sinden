@@ -46,7 +46,7 @@ class CatalogoItemController extends Controller
                     return '<span class="status-badge ' . $color . '">' . $label . '</span>';
                 })
                 ->addColumn('precio_formato', function ($item) {
-                    return '$' . number_format($item->precio_unitario, 0, ',', '.');
+                    return '$' . number_format($item->precio_unitario, 0, '.', ',');
                 })
                 ->addColumn('iva_formato', function ($item) {
                     return number_format($item->porcentaje_iva, 0) . '%';
@@ -262,7 +262,7 @@ class CatalogoItemController extends Controller
             $html .= '<td>' . e($item->codigo) . '</td>';
             $html .= '<td>' . e($item->descripcion) . '</td>';
             $html .= '<td>' . $catLabel . '</td>';
-            $html .= '<td class="text-right">$' . number_format($item->precio_unitario, 0, ',', '.') . '</td>';
+            $html .= '<td class="text-right">$' . number_format($item->precio_unitario, 0, '.', ',') . '</td>';
             $html .= '<td class="text-right">' . number_format($item->porcentaje_iva, 0) . '%</td>';
             $html .= '</tr>';
         }

@@ -64,16 +64,16 @@
                 <div class="d-inline-flex gap-4">
                     <div>
                         <span class="order-status-label">TOTAL</span><br>
-                        <span class="fs-5 fw-bold text-dark">${{ number_format($orden->total, 0, ',', '.') }}</span>
+                        <span class="fs-5 fw-bold text-dark">${{ number_format($orden->total, 0, '.', ',') }}</span>
                     </div>
                     <div>
                         <span class="order-status-label">PAGADO</span><br>
-                        <span class="fs-5 fw-semibold text-success" id="headerPagado">${{ number_format($orden->total_pagado, 0, ',', '.') }}</span>
+                        <span class="fs-5 fw-semibold text-success" id="headerPagado">${{ number_format($orden->total_pagado, 0, '.', ',') }}</span>
                     </div>
                     <div>
                         <span class="order-status-label">SALDO</span><br>
                         <span class="fs-5 fw-bold {{ $orden->saldo > 0 ? 'text-danger' : 'text-success' }}" id="headerSaldo">
-                            ${{ number_format($orden->saldo, 0, ',', '.') }}
+                            ${{ number_format($orden->saldo, 0, '.', ',') }}
                         </span>
                     </div>
                 </div>

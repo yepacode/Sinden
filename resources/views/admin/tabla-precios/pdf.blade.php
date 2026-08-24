@@ -12,7 +12,7 @@
     };
     $fmtPrecio = function ($v) {
         if ($v === null || $v === '') return '-';
-        return '$' . number_format((float) $v, 0, ',', '.');
+        return '$' . number_format((float) $v, 0, '.', ',');
     };
 @endphp
 <!DOCTYPE html>

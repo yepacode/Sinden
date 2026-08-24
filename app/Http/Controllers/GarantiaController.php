@@ -52,7 +52,7 @@ class GarantiaController extends Controller
                 })
                 ->addColumn('cobrable_display', function ($g) {
                     if ($g->cobrable) {
-                        return '<span class="text-danger fw-semibold">$' . number_format($g->monto_cobro, 0, ',', '.') . '</span>';
+                        return '<span class="text-danger fw-semibold">$' . number_format($g->monto_cobro, 0, '.', ',') . '</span>';
                     }
                     return '<span class="text-muted">-</span>';
                 })

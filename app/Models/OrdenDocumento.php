@@ -45,7 +45,7 @@ class OrdenDocumento extends Model
         $i = (int) floor(log($bytes, 1024));
         $i = min($i, count($units) - 1);
         $val = $bytes / pow(1024, $i);
-        return number_format($val, $i === 0 ? 0 : 1, ',', '.') . ' ' . $units[$i];
+        return number_format($val, $i === 0 ? 0 : 1, '.', ',') . ' ' . $units[$i];
     }
 
     public function getIconoAttribute()

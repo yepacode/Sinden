@@ -31,7 +31,7 @@
         @endif
         @if(\App\Models\ConfiguracionSistema::metricaVisible('recepcion', 'saldo_pendiente'))
         <a href="{{ route('recepcion.ordenes.index') }}" class="text-decoration-none">
-            <x-sinden.stat-card icon="bi bi-currency-dollar" :value="'$' . number_format($stats['saldo_pendiente'], 0, ',', '.')" title="Saldo Pendiente" color="danger" />
+            <x-sinden.stat-card icon="bi bi-currency-dollar" :value="'$' . number_format($stats['saldo_pendiente'], 0, '.', ',')" title="Saldo Pendiente" color="danger" />
         </a>
         @endif
         @if(\App\Models\ConfiguracionSistema::metricaVisible('recepcion', 'para_complementar'))

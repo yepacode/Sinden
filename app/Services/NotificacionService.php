@@ -109,7 +109,7 @@ class NotificacionService
 
         $pieza = $garantia->pieza;
         $orden = $garantia->orden;
-        $monto = number_format($garantia->monto_cobro, 0, ',', '.');
+        $monto = number_format($garantia->monto_cobro, 0, '.', ',');
 
         static::notificarRoles(
             ['Contabilidad'],
@@ -126,7 +126,7 @@ class NotificacionService
 
     public static function abonoPendienteAprobacion(Pago $pago, Orden $orden): void
     {
-        $monto = number_format($pago->monto, 0, ',', '.');
+        $monto = number_format($pago->monto, 0, '.', ',');
 
         static::notificarRoles(
             ['Administrador', 'Contabilidad'],
@@ -143,7 +143,7 @@ class NotificacionService
             return;
         }
 
-        $monto = number_format($pago->monto, 0, ',', '.');
+        $monto = number_format($pago->monto, 0, '.', ',');
         $orden = $pago->orden;
 
         static::notificar(
@@ -161,7 +161,7 @@ class NotificacionService
             return;
         }
 
-        $monto = number_format($pago->monto, 0, ',', '.');
+        $monto = number_format($pago->monto, 0, '.', ',');
 
         static::notificar(
             User::find($pago->registrado_por),

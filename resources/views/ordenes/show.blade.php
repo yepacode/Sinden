@@ -112,7 +112,7 @@
                         <span class="input-group-text">$</span>
                         <input type="number" class="form-control" id="pagoMonto" min="1" step="1" max="{{ $orden->montoDisponibleNuevoPago() }}">
                     </div>
-                    <small class="text-muted">Maximo permitido: ${{ number_format($orden->montoDisponibleNuevoPago(), 0, ',', '.') }}</small>
+                    <small class="text-muted">Maximo permitido: ${{ number_format($orden->montoDisponibleNuevoPago(), 0, '.', ',') }}</small>
                 </div>
                 <div class="mb-3">
                     <label class="form-label fw-medium">Metodo de Pago</label>
