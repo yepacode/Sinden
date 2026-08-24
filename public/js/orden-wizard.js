@@ -198,12 +198,13 @@ function initStepWatchers() {
 // ==========================================
 function formatCOP(valor) {
     if (isNaN(valor) || valor === null) valor = 0;
-    return '$' + Math.round(valor).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    return '$' + Math.round(valor).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
 
 function parseCOP(str) {
     if (!str) return 0;
-    return parseFloat(String(str).replace(/[$.]/g, '').replace(',', '.')) || 0;
+    // Formato US: la coma es separador de miles, el punto es decimal.
+    return parseFloat(String(str).replace(/[$,]/g, '')) || 0;
 }
 
 // Convierte el texto del descuento (acepta punto o coma) a numero 0-100 con maximo
@@ -217,30 +218,30 @@ function parseDescuento(str) {
 
 /**
  * Formatea en vivo un input de moneda mientras el usuario escribe.
- * Miles separados por punto; decimales opcionales (max 2) tras una coma.
+ * Miles separados por coma; decimales opcionales (max 2) tras un punto.
  * Los decimales NO aparecen por defecto: solo si el usuario los escribe.
  */
 function formatearMoneda(input) {
     var posIni = input.selectionStart;
     var largoIni = input.value.length;
 
-    // Dejar solo digitos y comas
-    var val = input.value.replace(/[^0-9,]/g, '');
-    var primeraComa = val.indexOf(',');
+    // Dejar solo digitos y puntos (el punto es el separador decimal)
+    var val = input.value.replace(/[^0-9.]/g, '');
+    var primerPunto = val.indexOf('.');
     var entero, decimal = null;
-    if (primeraComa !== -1) {
-        entero = val.slice(0, primeraComa).replace(/,/g, '');
-        decimal = val.slice(primeraComa + 1).replace(/,/g, '').slice(0, 2);
+    if (primerPunto !== -1) {
+        entero = val.slice(0, primerPunto).replace(/\./g, '');
+        decimal = val.slice(primerPunto + 1).replace(/\./g, '').slice(0, 2);
     } else {
         entero = val;
     }
     // Quitar ceros a la izquierda dejando al menos un digito
     entero = entero.replace(/^0+(?=\d)/, '');
-    var enteroFmt = entero.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    var enteroFmt = entero.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
     var resultado = enteroFmt;
     if (decimal !== null) {
-        resultado += ',' + decimal;
+        resultado += '.' + decimal;
     }
     input.value = resultado;
 
@@ -260,11 +261,15 @@ function setValorMoneda($el, num) {
     if (isNaN(num)) num = 0;
     var str = num.toFixed(2).replace(/0+$/, '').replace(/\.$/, '');
     var partes = str.split('.');
-    var enteroFmt = partes[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-    $el.val(enteroFmt + (partes[1] ? ',' + partes[1] : ''));
+    var enteroFmt = partes[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    $el.val(enteroFmt + (partes[1] ? '.' + partes[1] : ''));
 }
 
 function handleAjaxError(xhr, contexto) {
+    // El 419 (token vencido) lo maneja conexion-handler: refresca el token y reintenta
+    // la operacion de forma transparente. No mostrar aqui un error que ademas parpadearia
+    // justo antes de que el reintento tenga exito.
+    if (xhr && xhr.status === 419) return;
     var msg = 'Error al ' + contexto + '.';
     if (xhr.responseJSON) {
         if (xhr.responseJSON.message) msg = xhr.responseJSON.message;
@@ -519,10 +524,13 @@ function renumerarFilasItems() {
 
 var itemSearchTimers = {};
 function buscarItemCatalogo(input) {
-    if ($(input).prop('readonly')) return;
     var idx = $(input).data('idx');
-    var q = $(input).val().trim();
     var $results = $('#itemResults_' + idx);
+    // Solo un dropdown de items abierto a la vez: cerrar los de las demas filas
+    // (evita que los menus se encimen y no se escondan al pasar de una fila a otra).
+    $('.item-autocomplete-results').not($results).hide();
+    if ($(input).prop('readonly')) { $results.hide(); return; }
+    var q = $(input).val().trim();
 
     clearTimeout(itemSearchTimers[idx]);
 
@@ -545,6 +553,10 @@ function buscarItemCatalogo(input) {
                     );
                 });
             }
+            // Solo mostrar si el input sigue enfocado. Si el usuario ya paso a otra
+            // fila mientras este AJAX viajaba, un show tardio reabriria este dropdown
+            // y quedarian dos encimados (el .hide() sincrono ya corrio en la otra fila).
+            if (document.activeElement !== input) return;
             var inputRect = input.getBoundingClientRect();
             $results.css({
                 width: 'auto',
@@ -1306,6 +1318,8 @@ function buscarMaterialPieza(input) {
     var idx = $(input).data('idx');
     var q = $(input).val().trim().toLowerCase();
     var $results = $('#materialResults_' + idx);
+    // Solo un dropdown de material abierto a la vez: cerrar los de las demas filas
+    $('.material-autocomplete-results').not($results).hide();
 
     var materiales = WIZARD_CONFIG.materiales || [];
     var filtrados = materiales.filter(function(m) {
@@ -1761,8 +1775,8 @@ function validarSobrepagoWizard() {
     if (totalAbonado > totalGeneral + 0.005) {
         return {
             ok: false,
-            mensaje: 'La suma de abonos ($' + totalAbonado.toLocaleString('es-CO') +
-                     ') excede el total de la orden ($' + totalGeneral.toLocaleString('es-CO') + ').',
+            mensaje: 'La suma de abonos ($' + totalAbonado.toLocaleString('en-US') +
+                     ') excede el total de la orden ($' + totalGeneral.toLocaleString('en-US') + ').',
         };
     }
     return { ok: true };
