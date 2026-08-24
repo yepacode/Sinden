@@ -42,6 +42,26 @@ window.SindenConexion = (function($) {
         window.addEventListener('online', function() { doPing(); });
         window.addEventListener('offline', function() { confirmOffline(); });
 
+        // Al volver a la pestana o enfocar la ventana: ping + refresco SILENCIOSO del
+        // token, para que la sesion Y el token esten frescos ANTES de que el usuario
+        // actue. Previene de raiz el 419 tras suspension del equipo o pestana dormida
+        // (el timer de 15s puede haberse congelado mientras no estaba visible). Con
+        // throttle porque visibilitychange y focus suelen dispararse casi a la vez.
+        var ultimoDespertar = 0;
+        function alDespertar() {
+            var ahora = Date.now();
+            if (ahora - ultimoDespertar < 2000) return; // throttle 2s
+            ultimoDespertar = ahora;
+            doPing();
+            // Refresco silencioso: si la sesion murio, refreshCsrfToken rechaza y NO
+            // molestamos aqui; el relogin se muestra cuando el usuario haga una accion real.
+            refreshCsrfToken().catch(function() { /* noop */ });
+        }
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) alDespertar();
+        });
+        window.addEventListener('focus', alDespertar);
+
         // Interceptor AJAX global
         setupAjaxInterceptor();
         setupGlobalAjaxError();
@@ -293,23 +313,35 @@ window.SindenConexion = (function($) {
                 }
             }
 
-            // 419 = CSRF token expirado
+            // 419 = CSRF token expirado (token viejo) o sesion caida.
             if (xhr.status === 419) {
+                // Evitar bucle: solo un reintento automatico por request.
+                if (settings && settings._csrfRetried) {
+                    avisarReloginNecesario();
+                    return;
+                }
                 refreshCsrfToken().then(function() {
-                    showToast('info', 'Sesion actualizada', 'Intente la operacion de nuevo.');
+                    // Token renovado. Un 419 se rechaza ANTES del controlador, asi que la
+                    // operacion NO se ejecuto: reintentarla es seguro (sin doble-guardado).
+                    if (settings && settings.url) {
+                        settings._csrfRetried = true;
+                        // El ajaxPrefilter refresca el header, pero Laravel prioriza el
+                        // _token del body: hay que refrescarlo ahi tambien o el reintento
+                        // volveria a dar 419.
+                        reinyectarTokenEnBody(settings);
+                        $.ajax(settings);
+                    } else {
+                        showToast('info', 'Sesion actualizada', 'Intente la operacion de nuevo.');
+                    }
+                }).fail(function() {
+                    // No se pudo renovar -> la sesion realmente expiro.
+                    avisarReloginNecesario();
                 });
             }
 
             // 401 = sesion expirada
             if (xhr.status === 401) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Sesion expirada',
-                    text: 'Su sesion ha expirado. Sera redirigido al inicio de sesion.',
-                    confirmButtonColor: '#4A7C59'
-                }).then(function() {
-                    window.location.href = '/login';
-                });
+                avisarReloginNecesario();
             }
         });
     }
@@ -541,12 +573,16 @@ window.SindenConexion = (function($) {
     // ==========================================
     // CSRF TOKEN REFRESH
     // ==========================================
+    // Flag para no apilar varios modales de re-login simultaneos.
+    var avisandoRelogin = false;
+
     function refreshCsrfToken() {
         return $.ajax({
             url: CONFIG.CSRF_REFRESH_URL,
             method: 'GET',
             global: false,
-            timeout: 5000
+            timeout: 5000,
+            dataType: 'json' // si la sesion murio, /api/csrf-refresh redirige al login (HTML) y esto rechaza
         }).then(function(response) {
             if (response && response.token) {
                 var newToken = response.token;
@@ -566,8 +602,60 @@ window.SindenConexion = (function($) {
                 $.ajaxSetup({
                     headers: { 'X-CSRF-TOKEN': newToken }
                 });
+                return true;
             }
+            // No vino token -> tratar como sesion caida (rechaza la promesa)
+            return $.Deferred().reject().promise();
         });
+    }
+
+    // Sesion realmente expirada: avisar claro y mandar al login (una sola vez).
+    function avisarReloginNecesario() {
+        if (avisandoRelogin) return;
+        avisandoRelogin = true;
+        Swal.fire({
+            icon: 'warning',
+            title: 'Tu sesion expiro',
+            text: 'Por seguridad debes iniciar sesion de nuevo. Lo que ya se habia guardado se conservo.',
+            confirmButtonText: 'Iniciar sesion',
+            confirmButtonColor: '#4A7C59',
+            allowOutsideClick: false
+        }).then(function() {
+            window.location.href = '/login';
+        });
+    }
+
+    // Reescribe el _token dentro del CUERPO del request con el token fresco del meta.
+    // Laravel resuelve el CSRF como $request->input('_token') ?: header('X-CSRF-TOKEN'):
+    // el _token del body GANA sobre el header. Como muchos requests de la app mandan
+    // _token en el body (operario, wizard, dibujo), refrescar solo el header no basta;
+    // sin esto el reintento re-fallaria con 419. Mismo patron que processQueue.
+    function reinyectarTokenEnBody(settings) {
+        if (!settings || settings.data == null) return;
+        var token = $('meta[name="csrf-token"]').attr('content');
+        if (!token) return;
+        var data = settings.data;
+        try {
+            if (typeof FormData !== 'undefined' && data instanceof FormData) {
+                data.set('_token', token);
+            } else if (typeof data === 'string') {
+                var esJson = (settings.contentType && String(settings.contentType).indexOf('json') !== -1)
+                             || /^\s*[\{\[]/.test(data);
+                if (esJson) {
+                    var obj = JSON.parse(data);
+                    obj._token = token;
+                    settings.data = JSON.stringify(obj);
+                } else if (data.indexOf('_token=') !== -1) {
+                    settings.data = data.replace(/_token=[^&]*/, '_token=' + encodeURIComponent(token));
+                } else if (data.length) {
+                    settings.data = data + '&_token=' + encodeURIComponent(token);
+                } else {
+                    settings.data = '_token=' + encodeURIComponent(token);
+                }
+            } else if (typeof data === 'object') {
+                data._token = token;
+            }
+        } catch (e) { /* el header fresco queda como fallback */ }
     }
 
     // ==========================================

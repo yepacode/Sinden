@@ -31,7 +31,10 @@ return [
     |
     */
 
-    'lifetime' => env('SESSION_LIFETIME', 120),
+    // 480 min = 8h (jornada laboral). El keepalive de conexion-handler.js mantiene
+    // viva la sesion mientras la pestana este abierta; esto es la red de seguridad
+    // si el equipo se suspende o el JS no corre. Se puede sobrescribir en el .env.
+    'lifetime' => env('SESSION_LIFETIME', 480),
 
     'expire_on_close' => false,
 
